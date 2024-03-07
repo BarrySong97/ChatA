@@ -1,0 +1,14 @@
+.ant-table-row-selected .ant-table-cell {
+    color: rgb(0, 112, 240);
+}
+
+.progress-bar-item-data {
+    opacity: 0;
+    /* translate: 0 -6px; */
+}
+
+.progress-bar-item:hover~.progress-bar-item-data {
+    opacity: 1;
+    translate: 0 -6px;
+    transition: all 0.8s;
+}
