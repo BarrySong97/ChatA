@@ -26,7 +26,7 @@ const AppLayout: FC<AppLayoutProps> = () => {
         >
           <Side />
         </aside>
-        <div className="flex-1">
+        <div className="flex-1 relative">
           <div
             style={{
               width: "100%",
@@ -37,7 +37,7 @@ const AppLayout: FC<AppLayoutProps> = () => {
               <TrafficLight isDev={false} />
             </DragTitle>
           </div>
-          <div className="absolute top-0 bottom-0 overflow-hidden">
+          <div className="absolute top-0 bottom-0 right-0 left-0 overflow-hidden">
             <Outlet />
           </div>
         </div>
