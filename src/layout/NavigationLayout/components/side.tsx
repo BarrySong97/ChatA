@@ -24,19 +24,19 @@ const Side: FC<SideProps> = () => {
     {
       key: "chats",
       href: "/",
-      title: "Chats",
+      title: "会话",
       icon: <SolarChatLineBold />,
     },
     {
       key: "app",
       href: "/app",
-      title: "Application",
+      title: "应用",
       icon: <IconParkSolidAllApplication />,
     },
     {
       key: "setting",
       href: "/setting",
-      title: "Setting",
+      title: "设置",
       icon: <SolarSettingsBold />,
     },
   ];

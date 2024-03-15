@@ -5,7 +5,7 @@ import General from "./pages/Setting/components/General";
 import Appearance from "./pages/Appearance";
 import Advanced from "./pages/Advanced";
 import About from "./pages/About";
-import Chats from "./pages/Chats/inex";
+import Chats from "./pages/Chats";
 import Application from "./pages/Application";
 
 const router = createHashRouter([
