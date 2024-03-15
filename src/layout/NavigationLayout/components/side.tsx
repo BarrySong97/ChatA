@@ -1,5 +1,7 @@
 import {
+  IconParkSolidAllApplication,
   MaterialSymbolsToolsWrench,
+  SolarChatLineBold,
   SolarFolderBold,
   SolarLogout2Bold,
   SolarSettingsBold,
@@ -20,14 +22,20 @@ export interface SideProps {}
 const Side: FC<SideProps> = () => {
   const menuList = [
     {
-      key: "projects",
-      href: "/navigation",
-      title: "Projects",
-      icon: <SolarFolderBold />,
+      key: "chats",
+      href: "/",
+      title: "Chats",
+      icon: <SolarChatLineBold />,
+    },
+    {
+      key: "app",
+      href: "/app",
+      title: "Application",
+      icon: <IconParkSolidAllApplication />,
     },
     {
       key: "setting",
-      href: "/navigation/setting",
+      href: "/setting",
       title: "Setting",
       icon: <SolarSettingsBold />,
     },
@@ -35,22 +43,10 @@ const Side: FC<SideProps> = () => {
   const location = useLocation();
   const pathname = location.pathname;
   const navigate = useNavigate();
-  console.log(pathname);
 
-  const signout = async () => {
-    await ipcSignout();
-    navigate("/");
-  };
   return (
     <div className="no-drag h-screen flex flex-col justify-between pb-4 ">
       <div className="flex flex-col justify-center items-center">
-        <Avatar
-          isBordered
-          as="button"
-          className="mb-4 transition-transform"
-          src="https://i.pravatar.cc/150?u=a042581f4e29026704d"
-        />
-
         {menuList.map((item) => {
           const isActive =
             pathname === item.href ||
@@ -59,11 +55,12 @@ const Side: FC<SideProps> = () => {
           return (
             <Tooltip key={item.key} placement={"right"} content={item.title}>
               <Button
-                style={{
-                  backgroundColor: isActive
-                    ? "hsl(var(--nextui-default) / 0.4)"
-                    : "",
-                }}
+                // style={{
+                //   backgroundColor: isActive
+                //     ? "hsl(var(--nextui-default) / 0.4)"
+                //     : "",
+                // }}
+                color={isActive ? "primary" : "default"}
                 onClick={() => {
                   navigate(item.href);
                 }}
@@ -73,7 +70,7 @@ const Side: FC<SideProps> = () => {
                 size="sm"
                 variant="light"
               >
-                <span className="text-lg text-default-700" style={{}}>
+                <span className="text-lg " style={{}}>
                   {item.icon}
                 </span>
               </Button>
@@ -83,26 +80,11 @@ const Side: FC<SideProps> = () => {
       </div>
 
       <div>
-        <Tooltip placement={"right"} content={"Sign out"}>
-          <Button
-            onClick={signout}
-            className="py-6 "
-            radius="none"
-            size="sm"
-            // color="danger"
-            variant="light"
-          >
-            <span className="text-lg" style={{}}>
-              <SolarLogout2Bold className="text-default-500" />
-            </span>
-          </Button>
-        </Tooltip>
-
         {window.platform.isProduction() ? null : (
           <Tooltip placement={"right"} content={"Dev Tool"}>
             <Button
               onClick={ipcDevtoolMain}
-              className="py-6 "
+              className=" "
               radius="none"
               size="sm"
               variant="light"

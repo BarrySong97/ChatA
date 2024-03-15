@@ -15,10 +15,15 @@ import TrafficLight from "@/components/TrafficLight";
 export interface AppLayoutProps {}
 const AppLayout: FC<AppLayoutProps> = () => {
   const navigate = useNavigate();
+  const isMac = window.platform.getOS() === "darwin";
   return (
     <NextUIProvider navigate={navigate}>
       <div className="flex h-screen overflow-hidden">
-        <aside className="bg-[#F3F3F4] app-draggable h-screen w-[68px] pt-12 flex flex-col items-center">
+        <aside
+          className={`bg-[#F3F3F4] app-draggable h-screen w-[64px] ${
+            isMac ? "pt-4" : "PT-2"
+          } flex flex-col items-center`}
+        >
           <Side />
         </aside>
         <div className="flex-1">

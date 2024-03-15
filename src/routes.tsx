@@ -1,14 +1,12 @@
 import { createHashRouter } from "react-router-dom";
-import SignIn from "./pages/Signin";
-import Projects from "./pages/Projects";
 import AppLayout from "./layout/NavigationLayout";
 import Setting from "./pages/Setting";
 import General from "./pages/Setting/components/General";
-import ProjectFileList from "./pages/ProjectFileList";
-import ProjectChatbot from "./pages/ProjectChatbot";
 import Appearance from "./pages/Appearance";
 import Advanced from "./pages/Advanced";
 import About from "./pages/About";
+import Chats from "./pages/Chats/inex";
+import Application from "./pages/Application";
 
 const router = createHashRouter([
   // 导航界面路由
@@ -18,7 +16,11 @@ const router = createHashRouter([
     children: [
       {
         index: true,
-        element: <Projects />,
+        element: <Chats />,
+      },
+      {
+        path: "app",
+        element: <Application />,
       },
       {
         path: "setting",

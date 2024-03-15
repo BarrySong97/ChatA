@@ -65,23 +65,6 @@ const LiveWindow: LiveWindow = {
   main: null,
   projects: new Map(),
 };
-function resizeWindow(action: TRAFFIC_LIGHT) {
-  const win = BrowserWindow.getFocusedWindow();
-  switch (action) {
-    case TRAFFIC_LIGHT.MAXIMIZE:
-      win?.maximize();
-      break;
-    case TRAFFIC_LIGHT.MINIMIZE:
-      win?.minimize();
-      break;
-    case TRAFFIC_LIGHT.RESTORE:
-      win?.restore();
-      break;
-    case TRAFFIC_LIGHT.CLOSE:
-      win?.close();
-      break;
-  }
-}
 function trafficLightListener(win?: BrowserWindow) {
   if (!isMac) {
     win?.on("maximize", () => {
@@ -103,7 +86,7 @@ async function createWindow() {
     title: "Main window",
     icon: join(process.env.VITE_PUBLIC, "favicon.ico"),
     titleBarStyle: "hidden",
-    ...LoginWindowSize,
+    ...MainWindowSize,
     resizable: false,
     webPreferences: {
       preload,

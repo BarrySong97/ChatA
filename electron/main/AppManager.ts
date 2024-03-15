@@ -87,45 +87,10 @@ export class AppManager {
       mode: "detach",
     });
   }
-  // 打开一个新项目
-  [IPC_EVENT_KEYS.OPEN_PROJECT](projectId: string, stage: ProjectStage) {
-    const exist = this.projects.get(projectId);
-    if (exist) {
-      exist.show();
-      return;
-    }
-    const childWindow = new BrowserWindow({
-      width: 1512,
-      height: 872,
-      frame: false,
-      titleBarStyle: "hiddenInset",
-      webPreferences: {
-        preload: this.preload,
-        nodeIntegration: true,
-      },
-    });
-    childWindow.setMinimumSize(
-      MainWindowSize.minWidth,
-      MainWindowSize.minHeight
-    );
-    trafficLightListener(childWindow);
-    childWindow.on("closed", () => {
-      this.projects.delete(projectId);
-    });
-    const hash = `#/projectDetail/${projectId}/chatbot?stage=${stage}`;
-    if (process.env.VITE_DEV_SERVER_URL) {
-      childWindow.loadURL(`${this.url}${hash}`);
-    } else {
-      childWindow.loadFile(this.indexHtml, { hash: hash });
-    }
-    this.projects.set(projectId, childWindow);
-  }
   // 当操作右上角的自定义trafficlight的时候
   [IPC_EVENT_KEYS.WINDOW_RESIZE](action: TRAFFIC_LIGHT) {
     resizeWindow(action);
   }
-
-  [IPC_EVENT_KEYS.CHECK_SIGN_IN]() {}
 
   // 注册通信事件，就是上面这些枚举配置的函数
   initHandler() {
