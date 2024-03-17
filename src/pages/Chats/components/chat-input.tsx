@@ -4,9 +4,11 @@ import {
   MaterialSymbolsGeneratingTokensOutline,
   SolarPaperclip2Bold,
 } from "@/assets/icon";
-import { Button, Textarea, Tooltip } from "@nextui-org/react";
-import React, { FC } from "react";
-export interface ChatInputProps {}
+import { Button, Tooltip } from "@nextui-org/react";
+import { FC } from "react";
+export interface ChatInputProps {
+  onSend: (text: string) => void;
+}
 const ChatInput: FC<ChatInputProps> = () => {
   const actions = [
     // {
@@ -43,9 +45,31 @@ const ChatInput: FC<ChatInputProps> = () => {
             </Button>
           </Tooltip>
         ))}
+        <Button
+          size="sm"
+          color="primary"
+          variant="flat"
+          radius="sm"
+          className="px-2 "
+          startContent={<CarbonModelAlt className="text-large" />}
+        >
+          GPT-4
+        </Button>
+        <Button
+          size="sm"
+          color="warning"
+          variant="flat"
+          radius="sm"
+          className="px-2 "
+          startContent={
+            <MaterialSymbolsGeneratingTokensOutline className="text-large" />
+          }
+        >
+          token: 1.5k
+        </Button>
       </div>
       <textarea
-        placeholder="输入你的信息"
+        placeholder="在这里打字，开启你的对话之旅！"
         className="flex-1 resize-none w-full  scrollbar px-4 py-1 outline-none"
       />
       <Button

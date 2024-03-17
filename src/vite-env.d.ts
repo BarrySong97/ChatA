@@ -7,4 +7,8 @@ interface Window {
     getOS: () => string;
     isProduction: () => boolean;
   };
+  prisma: import("@prisma/client").PrismaClient<
+    import("@prisma/client").Prisma.PrismaOptions,
+    never
+  >;
 }

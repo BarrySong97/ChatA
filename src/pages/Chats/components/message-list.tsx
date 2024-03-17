@@ -4,7 +4,7 @@ import { Message } from "@/api/models/Chat";
 import { ScrollShadow } from "@nextui-org/react";
 export interface MessageListProps {}
 const MessageList: FC<MessageListProps> = () => {
-  const data = new Array(50).fill(0).map((v, i) => {
+  const data = new Array(0).fill(0).map((v, i) => {
     return {
       id: Math.random() + "",
       role: i % 2 === 0 ? "user" : "assitant",

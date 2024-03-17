@@ -10,6 +10,8 @@ import {
   TRAFFIC_LIGHT,
 } from "../../src/constant";
 import { AppManager } from "./AppManager";
+import { PrismaClient } from "@prisma/client";
+import { ChatService } from "./DAO/Chat";
 
 globalThis.__filename = fileURLToPath(import.meta.url);
 globalThis.__dirname = dirname(__filename);
@@ -90,10 +92,14 @@ async function createWindow() {
     resizable: false,
     webPreferences: {
       preload,
+      // nodeIntegration: true,
+      // 开启沙箱 和上下文隔离
+      // contextIsolation: true,
       // Warning: Enable nodeIntegration and disable contextIsolation is not secure in production
     },
   });
   win.webContents.on("will-navigate", () => {});
+  win.webContents.openDevTools({ mode: "detach" });
   trafficLightListener(win);
   if (url) {
     win.loadURL(url);
@@ -110,9 +116,10 @@ async function createWindow() {
     if (url.startsWith("https:")) shell.openExternal(url);
     return { action: "deny" };
   });
-
+  const prismaClient = new PrismaClient();
   // 把所有通信的代码都挂载上面
   new AppManager(win, new Map(), indexHtml, preload, url);
+  new ChatService(prismaClient);
   // Apply electron-updater
   update(win);
 }

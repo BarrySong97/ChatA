@@ -22,3 +22,7 @@ export enum TRAFFIC_LIGHT {
   RESTORE = "restore",
   CLOSE = "close",
 }
+
+export enum CHAT_SERVICE {
+  ALLCHATS = "allchats",
+}

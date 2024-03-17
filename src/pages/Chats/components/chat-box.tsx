@@ -12,7 +12,7 @@ const Chatbox: FC<ChatboxProps> = ({ selectChat }) => {
     <div className="flex flex-col h-full">
       <div className="w-full">
         <div className="p-4 pb-0 text-large font-semibold">
-          {selectChat?.title}
+          {selectChat?.title ?? "新的会话"}
         </div>
         <Divider className="mt-2 w-full mb-0" />
       </div>
