@@ -24,7 +24,7 @@ const Chats: FC<ChatsProps> = () => {
         <ChatList
           selectChat={selectChat}
           onChange={(c) => setSelectChat(c)}
-          data={chats}
+          data={chats?.reverse()}
         />
       </div>
       <Divider orientation="vertical" className="h-full w-[1px]" />

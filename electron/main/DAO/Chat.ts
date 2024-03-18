@@ -15,7 +15,7 @@ export class ChatService {
   }
   // 获取所有chat
   [CHAT_SERVICE.ALLCHATS]() {
-    return this.prisma.chat.findMany();
+    return this.prisma.chat.findMany({});
   }
 
   // 创建chat
