@@ -19,19 +19,27 @@
   "dependencies": {
     "@nextui-org/react": "^2.2.9",
     "@prisma/client": "5.11.0",
+    "@tabler/icons-react": "^3.1.0",
     "ahooks": "^3.7.10",
+    "ai": "^3.0.12",
     "antd": "^5.14.2",
     "axios": "^1.6.7",
     "clsx": "^2.1.0",
     "electron-updater": "^6.1.1",
+    "eventsource-parser": "^1.1.2",
     "framer-motion": "^10.12.16",
+    "jwt-encode": "^1.0.1",
+    "react-markdown": "^9.0.1",
     "react-query": "^3.39.3",
     "react-resizable-panels": "^2.0.11",
     "react-router-dom": "^6.22.1",
-    "react-virtualized-auto-sizer": "^1.0.23"
+    "react-syntax-highlighter": "^15.5.0",
+    "react-virtualized-auto-sizer": "^1.0.23",
+    "remark-gfm": "^4.0.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.37.1",
+    "@types/jwt-encode": "^1.0.3",
     "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",
     "@vitejs/plugin-react": "^4.0.4",

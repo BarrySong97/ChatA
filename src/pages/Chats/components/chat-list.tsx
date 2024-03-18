@@ -3,14 +3,49 @@ import { Button, Divider, Input, ScrollShadow } from "@nextui-org/react";
 import { FC, useState } from "react";
 import { clsx } from "clsx";
 import { SolarAddSquareLineDuotone } from "@/assets/icon";
-import { Empty } from "antd";
+import { Dropdown, Empty, MenuProps, message } from "antd";
+import { ChatService } from "@/api/services/ChatService";
+import { useQueryClient } from "react-query";
 
 export interface ChatListProps {
   data?: Chat[];
-  onChange: (chat: Chat) => void;
+  onChange: (chat?: Chat) => void;
   selectChat?: Chat;
 }
 const ChatList: FC<ChatListProps> = ({ selectChat, data, onChange }) => {
+  const queryClient = useQueryClient();
+  const onDeleteChat = async (id: string) => {
+    try {
+      await ChatService.deleteChat(id);
+      queryClient.setQueryData("chats", (data: Chat[] = []) => {
+        const filter = data?.filter((chat) => chat.id !== id);
+        if (selectChat?.id === id) {
+          onChange(filter?.[0]);
+        }
+        return filter;
+      });
+      if (selectChat?.id === id) {
+        onChange(undefined);
+      }
+      message.success("删除成功");
+    } catch (error) {
+      message.warning("删除失败");
+    } finally {
+    }
+  };
+  const items: MenuProps["items"] = [
+    {
+      label: "编辑",
+      key: "edit",
+    },
+    {
+      label: "删除",
+      key: "delete",
+    },
+  ];
+  const addNewChat = () => {
+    onChange(undefined);
+  };
   return (
     <>
       <div className="no-drag flex mt-4  pb-2  justify-between px-2 gap-2  ">
@@ -20,7 +55,7 @@ const ChatList: FC<ChatListProps> = ({ selectChat, data, onChange }) => {
           labelPlacement="outside"
           size="sm"
         />
-        <Button variant="light" size="sm" isIconOnly>
+        <Button onClick={addNewChat} variant="light" size="sm" isIconOnly>
           <SolarAddSquareLineDuotone className="text-lg" />
         </Button>
       </div>
@@ -43,7 +78,7 @@ const ChatList: FC<ChatListProps> = ({ selectChat, data, onChange }) => {
       ) : (
         <ScrollShadow
           style={{ height: "calc(100vh - 64px)" }}
-          className=" px-2 overflow-auto scrollbar "
+          className=" w-[200px] px-2 overflow-auto scrollbar "
         >
           {data?.map((chat) => {
             const chatlistClassName = clsx(
@@ -53,15 +88,29 @@ const ChatList: FC<ChatListProps> = ({ selectChat, data, onChange }) => {
               }
             );
             return (
-              <div
-                key={chat.id}
-                onClick={() => {
-                  onChange(chat);
+              <Dropdown
+                menu={{
+                  items,
+                  onClick: ({ key }) => {
+                    switch (key) {
+                      case "delete":
+                        onDeleteChat(chat.id);
+                        break;
+                    }
+                  },
                 }}
-                className={chatlistClassName}
+                trigger={["contextMenu"]}
               >
-                {chat.title}
-              </div>
+                <div
+                  key={chat.id}
+                  onClick={() => {
+                    onChange(chat);
+                  }}
+                  className={chatlistClassName}
+                >
+                  {chat.title}
+                </div>
+              </Dropdown>
             );
           })}
         </ScrollShadow>

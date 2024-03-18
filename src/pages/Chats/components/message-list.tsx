@@ -1,20 +1,15 @@
 import { FC } from "react";
 import MessageItem from "./message-item";
-import { Message } from "@/api/models/Chat";
-import { ScrollShadow } from "@nextui-org/react";
-export interface MessageListProps {}
-const MessageList: FC<MessageListProps> = () => {
-  const data = new Array(0).fill(0).map((v, i) => {
-    return {
-      id: Math.random() + "",
-      role: i % 2 === 0 ? "user" : "assitant",
-      content: "Hello world!",
-    };
-  });
+import { Chat, Message } from "@/api/models/Chat";
+export interface MessageListProps {
+  chat?: Chat;
+  data?: Message[];
+}
+const MessageList: FC<MessageListProps> = ({ data }) => {
   return (
     <>
-      {data.map((v) => {
-        return <MessageItem data={v as Message} />;
+      {data?.map((v) => {
+        return <MessageItem key={v.id} data={v as Message} />;
       })}
     </>
   );

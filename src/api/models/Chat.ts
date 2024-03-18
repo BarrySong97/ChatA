@@ -2,6 +2,7 @@ export type Message = {
   content: string;
   id: string;
   role: Role;
+  chatId: string;
 };
 
 export type Role = "assistant" | "system" | "user";
@@ -10,4 +11,9 @@ export type Chat = {
   emoji?: string;
   id: string;
   title: string;
+  total_tokens: number;
 };
+export type GeneralMessageSend = {
+  role: string;
+  content: string;
+}[];

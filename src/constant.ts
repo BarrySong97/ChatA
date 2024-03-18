@@ -25,4 +25,9 @@ export enum TRAFFIC_LIGHT {
 
 export enum CHAT_SERVICE {
   ALLCHATS = "allchats",
+  GET_MESSAGES = "getmessages",
+  SEND_MESSAGE = "sendmessage",
+  CREATE_CHAT = "createchat",
+  DELETE_CHAT = "deletechat",
+  INSERT_MESSAGE = "insertmessage",
 }

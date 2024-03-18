@@ -8,15 +8,19 @@ import Chatbox from "./components/chat-box";
 export interface ChatsProps {}
 const Chats: FC<ChatsProps> = () => {
   const [selectChat, setSelectChat] = useState<Chat>();
-  const { data: chats } = useQuery<Chat[]>("chats", () => ChatService.chat(), {
-    refetchOnWindowFocus: false,
-    onSuccess(data) {
-      setSelectChat(data?.[0]);
-    },
-  });
+  const { data: chats } = useQuery<Chat[]>(
+    "chats",
+    () => ChatService.listChat(),
+    {
+      refetchOnWindowFocus: false,
+      onSuccess(data) {
+        setSelectChat(data?.[0]);
+      },
+    }
+  );
   return (
     <div className=" flex h-full w-full ">
-      <div className=" w-[200px] no-drag">
+      <div className="   no-drag ">
         <ChatList
           selectChat={selectChat}
           onChange={(c) => setSelectChat(c)}
@@ -25,7 +29,10 @@ const Chats: FC<ChatsProps> = () => {
       </div>
       <Divider orientation="vertical" className="h-full w-[1px]" />
       <div className="flex-1">
-        <Chatbox selectChat={selectChat} />
+        <Chatbox
+          onSelectChat={(c) => setSelectChat(c)}
+          selectChat={selectChat}
+        />
       </div>
     </div>
   );

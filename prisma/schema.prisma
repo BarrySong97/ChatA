@@ -11,6 +11,16 @@ datasource db {
 }
 
 model Chat {
-  id    String @id @default(cuid())
-  title String
+  id           String    @id @default(cuid())
+  title        String
+  message      Message[]
+  total_tokens Float     @default(0)
+}
+
+model Message {
+  id      String  @id @default(cuid())
+  content String
+  role    String
+  Chat    Chat?   @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  chatId  String?
 }

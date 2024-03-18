@@ -11,16 +11,14 @@ import router from "./routes";
 // import './demos/node'
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
-  <React.StrictMode>
-    <NextUIProvider>
-      <QueryClientProvider client={queryClient}>
-        <RouterProvider
-          router={router}
-          fallbackElement={<p>Initial Load...</p>}
-        />
-      </QueryClientProvider>
-    </NextUIProvider>
-  </React.StrictMode>
+  <NextUIProvider>
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider
+        router={router}
+        fallbackElement={<p>Initial Load...</p>}
+      />
+    </QueryClientProvider>
+  </NextUIProvider>
 );
 
 postMessage({ payload: "removeLoading" }, "*");
