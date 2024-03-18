@@ -78,7 +78,7 @@ const ChatList: FC<ChatListProps> = ({ selectChat, data, onChange }) => {
       ) : (
         <ScrollShadow
           style={{ height: "calc(100vh - 64px)" }}
-          className=" w-[200px] px-2 overflow-auto scrollbar "
+          className=" px-2 overflow-auto scrollbar "
         >
           {data?.map((chat) => {
             const chatlistClassName = clsx(

@@ -154,7 +154,7 @@ const Chatbox: FC<ChatboxProps> = ({ selectChat, onSelectChat }) => {
     });
   }, [messages]);
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex w-full flex-col h-full">
       <div className="w-full">
         <div className="p-4 pb-0 text-large font-semibold">
           {selectChat?.title ?? "新的会话"}

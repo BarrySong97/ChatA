@@ -20,7 +20,7 @@ const Chats: FC<ChatsProps> = () => {
   );
   return (
     <div className=" flex h-full w-full ">
-      <div className="   no-drag ">
+      <div className="basis-[220px] flex-shrink-0  no-drag ">
         <ChatList
           selectChat={selectChat}
           onChange={(c) => setSelectChat(c)}

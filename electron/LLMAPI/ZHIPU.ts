@@ -32,7 +32,7 @@ export class ZHIPUAPI {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "GLM-3-Turbo",
+        model: "GLM-4",
         stream: true,
         messages: messages,
       }),

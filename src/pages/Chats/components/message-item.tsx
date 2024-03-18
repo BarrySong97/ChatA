@@ -11,8 +11,8 @@ const MessageItem: FC<MessageItemProps> = ({ data }) => {
     return (
       <div className="flex  flex-col items-end">
         <div className="mb-1">You</div>
-        <div className="p-2 max-w-[80%] bg-primary rounded-md text-primary-foreground">
-          {data.content}
+        <div className="p-2 prose   max-w-[80%] bg-primary rounded-md text-primary-foreground">
+          <p>{data.content}</p>
         </div>
       </div>
     );
@@ -21,7 +21,7 @@ const MessageItem: FC<MessageItemProps> = ({ data }) => {
     return (
       <div>
         <div className="mb-1">Chatbot</div>
-        <div className="bg-primary-50 text-primary-900  rounded-md p-2 shadow-sm max-w-[80%]">
+        <div className="bg-primary-50 prose  text-primary-900  rounded-md p-2 shadow-sm max-w-[80%]">
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             components={{

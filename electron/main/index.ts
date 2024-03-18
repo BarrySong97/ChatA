@@ -56,7 +56,7 @@ const LoginWindowSize = {
 const MainWindowSize = {
   width: 981,
   height: 710,
-  minWidth: 981,
+  minWidth: 1050,
   minHeight: 710,
 };
 type LiveWindow = {
@@ -89,7 +89,6 @@ async function createWindow() {
     icon: join(process.env.VITE_PUBLIC, "favicon.ico"),
     titleBarStyle: "hidden",
     ...MainWindowSize,
-    resizable: false,
     webPreferences: {
       preload,
       // nodeIntegration: true,
