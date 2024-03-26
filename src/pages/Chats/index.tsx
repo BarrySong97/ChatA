@@ -5,12 +5,15 @@ import { useQuery } from "react-query";
 import { ChatService } from "@/api/services/ChatService";
 import { Chat } from "@/api/models/Chat";
 import Chatbox from "./components/chat-box";
+import { brandAtom } from "@/atom";
+import { useAtom } from "jotai";
 export interface ChatsProps {}
 const Chats: FC<ChatsProps> = () => {
   const [selectChat, setSelectChat] = useState<Chat>();
+  const [brand] = useAtom(brandAtom);
   const { data: chats } = useQuery<Chat[]>(
-    "chats",
-    () => ChatService.listChat(),
+    ["chats", brand?.id],
+    () => ChatService.listChat(brand?.id),
     {
       refetchOnWindowFocus: false,
       onSuccess(data) {
@@ -24,7 +27,7 @@ const Chats: FC<ChatsProps> = () => {
         <ChatList
           selectChat={selectChat}
           onChange={(c) => setSelectChat(c)}
-          data={chats?.reverse()}
+          data={chats}
         />
       </div>
       <Divider orientation="vertical" className="h-full w-[1px]" />

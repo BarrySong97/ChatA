@@ -32,6 +32,10 @@ body {
     border: 4px solid #f4f4f4
 }
 
+.ant-empty-image img {
+    border-radius: 8px;
+}
+
 /* set button(top and bottom of the scrollbar) */
 .scrollbar::-webkit-scrollbar-button {
     display: none

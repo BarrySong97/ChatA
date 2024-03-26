@@ -6,61 +6,81 @@ import {
   ParsedEvent,
   ReconnectInterval,
 } from "eventsource-parser";
-const [id, secret] = "e86d17631e717f545c2079b216e0843d.pURjQfxLu8VIVx49".split(
-  "."
-);
-const payload = {
-  api_key: id,
-  exp: 999999999999999,
-  iat: +new Date(),
-};
+import OpenAI from "openai";
 export class ZHIPUAPI {
   static baseUrl = "https://open.bigmodel.cn/api/paas/v4/chat/completions";
-  static API_KEY = "e86d17631e717f545c2079b216e0843d.pURjQfxLu8VIVx49";
-  static token = sign(payload, secret, {
-    alg: "HS256",
-    sign_type: "SIGN",
-  });
-  public static async getCompletions(
-    messages: GeneralMessageSend,
-    window: BrowserWindow | null
-  ) {
-    const response = await fetch(`${this.baseUrl}`, {
-      method: "POST",
-      headers: {
-        Authorization: ZHIPUAPI.token,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "GLM-4",
+  static token = "";
+  public static async getCompletions({
+    messages,
+    window,
+    key,
+    model,
+  }: {
+    key: string;
+    model: string;
+    messages: GeneralMessageSend;
+    window: BrowserWindow | null;
+  }) {
+    if (!ZHIPUAPI.token) {
+      const [id, secret] = key.split(".");
+      const payload = {
+        api_key: id,
+        exp: 999999999999999,
+        iat: +new Date(),
+      };
+      ZHIPUAPI.token = sign(payload, secret, {
+        alg: "HS256",
+        sign_type: "SIGN",
+      });
+    }
+    try {
+      const openai = new OpenAI({
+        apiKey: ZHIPUAPI.token,
+        baseURL: "https://open.bigmodel.cn/api/paas/v4",
+      });
+      const response = await openai.chat.completions.create({
+        messages: messages as any,
+        model,
         stream: true,
-        messages: messages,
-      }),
-    });
-    const decoder = new TextDecoder();
-    const totalText: string[] = [];
-    const onParse = (event: ParsedEvent | ReconnectInterval) => {
-      if (event.type === "event") {
-        const data = event.data;
+      });
+      let totalText = "";
+      let typingInterval: any = null; // 用于存储定时器ID，以便取消定时器
+      let index = 0; // 当前打字的索引
+      let typeText = "";
+      const typeMessage = () => {
+        const typeSpeed = 30; // 设置每个字符的打字速度（毫秒）
 
-        try {
-          const json = JSON.parse(data);
-          const text = json.choices[0].delta.content;
-          const useage = json.usage;
+        // 清除之前的定时器
+        clearInterval(typingInterval);
+        typingInterval = setInterval(() => {
+          if (index < totalText.length) {
+            typeText += totalText[index++];
+            window?.webContents.send("completions", {
+              text: typeText,
+              done: false,
+            });
+          } else {
+            // 完成打字，清除定时器
 
-          totalText.push(text);
-          window?.webContents.send("completions", {
-            text: totalText.join(""),
-            totalTokens: useage?.total_tokens ?? 0,
-          });
-        } catch (e) {}
+            // 如果当前数据块已经打完，检查是否还有更多的数据块
+            // 完成打字，清除定时器
+            clearInterval(typingInterval);
+          }
+        }, typeSpeed);
+      };
+      for await (const chunk of response as any) {
+        const text = chunk.choices[0].delta.content;
+        if (text) {
+          totalText += text;
+          typeMessage();
+        }
       }
-    };
-
-    const parser = createParser(onParse);
-
-    for await (const chunk of response.body as any) {
-      parser.feed(decoder.decode(chunk));
+      window?.webContents.send("completions", {
+        text: totalText,
+        done: true,
+      });
+    } catch (error) {
+      console.log(error);
     }
   }
 }

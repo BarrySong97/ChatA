@@ -4,6 +4,7 @@ import { DefaultArgs } from "@prisma/client/runtime/library";
 import { BrowserWindow, ipcMain } from "electron";
 import { ZHIPUAPI } from "../../LLMAPI/ZHIPU";
 import { GeneralMessageSend } from "../../../src/api/models/Chat";
+import { KIMI } from "../../LLMAPI/KIMI";
 
 export class ChatService {
   // 初始化一些绑定的事件到main window上, ts上可以直接在构造函数的参数初始化
@@ -14,15 +15,21 @@ export class ChatService {
     this.initHandler();
   }
   // 获取所有chat
-  [CHAT_SERVICE.ALLCHATS]() {
-    return this.prisma.chat.findMany({});
+  async [CHAT_SERVICE.ALLCHATS](brandId: string) {
+    const res = await this.prisma.chat.findMany({
+      where: {
+        brand_id: brandId,
+      },
+    });
+    return res.reverse();
   }
 
   // 创建chat
-  [CHAT_SERVICE.CREATE_CHAT](title: string) {
+  [CHAT_SERVICE.CREATE_CHAT](title: string, brandId: string) {
     return this.prisma.chat.create({
       data: {
         title: title,
+        brand_id: brandId,
       },
     });
   }
@@ -46,13 +53,40 @@ export class ChatService {
     return res;
   }
   // 发送消息
-  async [CHAT_SERVICE.SEND_MESSAGE](
-    messages: GeneralMessageSend,
-    text: string,
-    chatId: string
-  ) {
+  async [CHAT_SERVICE.SEND_MESSAGE]({
+    messages,
+    text,
+    chatId,
+    model,
+    key,
+    brandKey,
+  }: {
+    messages: GeneralMessageSend;
+    text: string;
+    chatId: string;
+    model: string;
+    key: string;
+    brandKey: string;
+  }) {
     const window = BrowserWindow.getFocusedWindow();
 
+    switch (brandKey) {
+      case "zhipu":
+        ZHIPUAPI.getCompletions({
+          messages,
+          window,
+          key,
+          model,
+        });
+        break;
+      case "kimi":
+        KIMI.getCompletions({
+          messages,
+          window,
+          key,
+          model,
+        });
+    }
     const res = await this.prisma.message.create({
       data: {
         content: text,
@@ -61,7 +95,6 @@ export class ChatService {
       },
     });
 
-    ZHIPUAPI.getCompletions(messages, window);
     return res;
   }
   // 插入消息

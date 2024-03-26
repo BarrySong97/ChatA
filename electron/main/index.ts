@@ -98,7 +98,6 @@ async function createWindow() {
     },
   });
   win.webContents.on("will-navigate", () => {});
-  win.webContents.openDevTools({ mode: "detach" });
   trafficLightListener(win);
   if (url) {
     win.loadURL(url);

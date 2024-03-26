@@ -11,6 +11,7 @@ export type Chat = {
   emoji?: string;
   id: string;
   title: string;
+  brand_id: string;
   total_tokens: number;
 };
 export type GeneralMessageSend = {

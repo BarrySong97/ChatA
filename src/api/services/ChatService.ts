@@ -7,16 +7,16 @@ export class ChatService {
    * @param params 获取对话列表
    * @returns
    */
-  public static listChat(): Promise<Chat[]> {
-    return window.ipcRenderer.invoke(CHAT_SERVICE.ALLCHATS);
+  public static listChat(brandId?: string): Promise<Chat[]> {
+    return window.ipcRenderer.invoke(CHAT_SERVICE.ALLCHATS, brandId);
   }
   /**
    *
    * @param params 创建chat
    * @returns
    */
-  public static createChat(title: string): Promise<Chat> {
-    return window.ipcRenderer.invoke(CHAT_SERVICE.CREATE_CHAT, title);
+  public static createChat(title: string, brandId: string): Promise<Chat> {
+    return window.ipcRenderer.invoke(CHAT_SERVICE.CREATE_CHAT, title, brandId);
   }
 
   /**
@@ -47,16 +47,14 @@ export class ChatService {
   /**
    * 发送消息
    */
-  public static sendMessage(
-    messages: GeneralMessageSend,
-    text: string,
-    chatId: string
-  ): Promise<Message> {
-    return window.ipcRenderer.invoke(
-      CHAT_SERVICE.SEND_MESSAGE,
-      messages,
-      text,
-      chatId
-    );
+  public static sendMessage(data: {
+    messages: Partial<Message>[];
+    text: string;
+    chatId: string;
+    model: string;
+    key: string;
+    brandKey: string;
+  }): Promise<Message> {
+    return window.ipcRenderer.invoke(CHAT_SERVICE.SEND_MESSAGE, data);
   }
 }
