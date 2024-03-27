@@ -3,7 +3,7 @@ export type Message = {
   id: string;
   role: Role;
   chatId: string;
-  status?: string;
+  status?: "sending" | "success" | "error" | "typing";
 };
 
 export type Role = "assistant" | "system" | "user";

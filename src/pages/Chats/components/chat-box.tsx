@@ -9,11 +9,19 @@ import { useQuery, useQueryClient } from "react-query";
 import { estimateTokenLength } from "@/util";
 import { brandAtom, currentModelAtom } from "@/atom";
 import { useAtom } from "jotai";
-import { useUpdate } from "ahooks";
 export interface ChatboxProps {
   selectChat?: Chat;
   onSelectChat: (chat: Chat) => void;
 }
+const renderError = (error: any) => {
+  const errorString = `
+\`\`\`json
+${JSON.stringify(error, null, 2)}
+
+\`\`\`
+`;
+  return errorString;
+};
 const Chatbox: FC<ChatboxProps> = ({ selectChat, onSelectChat }) => {
   const queryClient = useQueryClient();
   const chatRefId = useRef<string>(cuid());
@@ -39,10 +47,16 @@ const Chatbox: FC<ChatboxProps> = ({ selectChat, onSelectChat }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [currentModel] = useAtom(currentModelAtom);
   const [brand] = useAtom(brandAtom);
+  // 消息回复id
   const sendIdRef = useRef<string>();
+  //用户发送id
   const messageIdRef = useRef<string>();
-  const onSend = async (message: string) => {
+  const onSend = async (message: string, retry?: boolean, lastId?: string) => {
     // 计算token
+    // 为了防止messsage重新创建
+    sendIdRef.current = cuid();
+    messageIdRef.current = cuid();
+
     const messageToken =
       messages?.reduce(
         (pre, cur) => pre + estimateTokenLength(cur.content),
@@ -56,14 +70,15 @@ const Chatbox: FC<ChatboxProps> = ({ selectChat, onSelectChat }) => {
       // 每次超过的的时候就裁剪最前面的4个
       sendMessages = messages?.slice(Math.max(0, n - 4)) ?? [];
     } else {
-      messages?.push({ content: message, role: "user" } as Message);
+      messages?.push({
+        content: message,
+        role: "user",
+        id: messageIdRef.current!,
+      } as Message);
       sendMessages = messages ?? [
         { content: message, role: "user" } as Message,
       ];
     }
-    // 为了防止messsage重新创建
-    sendIdRef.current = cuid();
-    messageIdRef.current = cuid();
     if (selectChat && selectChat.type !== "new") {
       // 在一个已有的chat里面创建
 
@@ -84,14 +99,38 @@ const Chatbox: FC<ChatboxProps> = ({ selectChat, onSelectChat }) => {
           messages: sendMessages,
           text: message,
           chatId: newChatId,
+          lastId,
+          retry,
           model: currentModel!.name,
+          messageId: messageIdRef.current!,
+          sendId: sendIdRef.current!,
           key: brand?.key ?? "",
           brandKey: brand?.id ?? "",
           // brandKey: brand?.key ?? "",
         });
         refId.current = res.id;
         // 更新ui
-      } catch (error) {}
+        const { error } = res as any;
+
+        if (!error) {
+          refId.current = res.id;
+        } else {
+          queryClient.setQueryData(["messages", newChatId], () => {
+            return [
+              ...(messages ?? []),
+              {
+                content: renderError(error),
+                role: "assistant",
+                id: sendIdRef.current,
+                status: "success",
+              },
+            ];
+          });
+          chatRefId.current = cuid();
+        }
+      } catch (error) {
+        chatRefId.current = cuid();
+      }
     } else {
       const title = message.trim().slice(0, 12);
 
@@ -118,38 +157,64 @@ const Chatbox: FC<ChatboxProps> = ({ selectChat, onSelectChat }) => {
       onSelectChat(chat);
 
       // 在发送一个message
-      const res = await ChatService.sendMessage({
-        messages: sendMessages,
-        text: message,
-        chatId: newChatId,
-        model: currentModel!.name,
-        key: brand?.key ?? "",
-        brandKey: brand?.id ?? "",
-      });
-      refId.current = res.id;
+      try {
+        const res = await ChatService.sendMessage({
+          messages: sendMessages,
+          text: message,
+          messageId: messageIdRef.current!,
+          sendId: sendIdRef.current!,
+          chatId: newChatId,
+          model: currentModel!.name,
+          key: brand?.key ?? "",
+          brandKey: brand?.id ?? "",
+        });
+        const { error } = res as any;
+
+        if (!error) {
+          refId.current = res.id;
+        } else {
+          queryClient.setQueryData(["messages", newChatId], () => {
+            return [
+              ...(messages ?? []),
+              {
+                content: renderError(error),
+                role: "assistant",
+                id: sendIdRef.current,
+                status: "error",
+              },
+            ];
+          });
+          chatRefId.current = cuid();
+        }
+      } catch (error) {
+        chatRefId.current = cuid();
+      }
     }
     // 滚动到底部
   };
   useEffect(() => {
     // 监听流数据
     window.ipcRenderer.on(
-      "completions",
+      `completions`,
       async (
         _,
         res: {
           text: string;
           done: boolean;
+          chatId: string;
           totalTokens: number;
         }
       ) => {
         // 更新ui
-        const { done, text } = res;
+        const { done, text, chatId } = res;
+        if (newChatId !== chatId) {
+          return;
+        }
 
         queryClient.setQueryData<Message[]>(
           ["messages", newChatId],
           (_data: Message[] = []) => {
             const length = _data.length;
-
             if (length % 2 === 0) {
               _data.pop();
             }
@@ -160,7 +225,7 @@ const Chatbox: FC<ChatboxProps> = ({ selectChat, onSelectChat }) => {
                 content: text,
                 role: "assistant",
                 id: sendIdRef.current,
-                status: done ? "success" : "sending",
+                status: "typing",
               },
             ] as Message[];
           }
@@ -169,25 +234,55 @@ const Chatbox: FC<ChatboxProps> = ({ selectChat, onSelectChat }) => {
         if (done) {
           const { text } = res;
           chatRefId.current = cuid();
-          await ChatService.insertMessage({
-            chatId: newChatId,
-            role: "assistant",
-            content: text,
-            totalTokens: 0,
-          });
+          queryClient.setQueryData<Message[]>(
+            ["messages", newChatId],
+            (_data: Message[] = []) => {
+              const length = _data.length;
+              const last = _data[length - 1];
+              last.status = "success";
+              return [..._data] as Message[];
+            }
+          );
         }
       }
     );
     return () => {
-      window.ipcRenderer.removeAllListeners("completions");
+      window.ipcRenderer.removeAllListeners(`completions`);
     };
-  }, [selectChat]);
+  }, [newChatId]);
   useEffect(() => {
     scrollRef.current?.scrollTo({
       top: scrollRef.current?.scrollHeight,
     });
   }, [messages]);
 
+  const onStop = async () => {
+    window.ipcRenderer.removeAllListeners(`completions`);
+    queryClient.setQueryData<Message[]>(
+      ["messages", newChatId],
+      (_data: Message[] = []) => {
+        const length = _data.length;
+        const last = _data[length - 1];
+        last.status = "success";
+        return [..._data] as Message[];
+      }
+    );
+  };
+  const onRetry = async () => {
+    const messages = queryClient.getQueryData<Message[]>([
+      "messages",
+      newChatId,
+    ]);
+    const deleteItem = messages?.pop(); // 删除的消息
+    const last = messages?.pop(); // 从新发送的消息
+    let deleteId = deleteItem?.id;
+    if (deleteItem?.status === "error") {
+      deleteId = "error";
+    }
+    if (last && deleteId) {
+      onSend(last.content, true, deleteId);
+    }
+  };
   return (
     <div className="flex flex-col h-full">
       <div className="w-full">
@@ -200,10 +295,9 @@ const Chatbox: FC<ChatboxProps> = ({ selectChat, onSelectChat }) => {
         ref={scrollRef}
         className="flex-1 overflow-auto  scrollbar px-4 pt-3 pb-4"
       >
-        <MessageList data={messages} />
+        <MessageList onStop={onStop} onRetry={onRetry} data={messages} />
       </div>
-      <div className="h-[180px]">
-        <Divider className="p-0 m-0 w-full" />
+      <div className="pb-4">
         <ChatInput onSend={onSend} currentChat={selectChat} />
       </div>
     </div>

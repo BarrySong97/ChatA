@@ -57,46 +57,90 @@ export class ChatService {
   async [CHAT_SERVICE.SEND_MESSAGE]({
     messages,
     text,
+    sendId,
     chatId,
     model,
     key,
+    lastId,
+    retry,
+    messageId,
     brandKey,
   }: {
     messages: GeneralMessageSend;
     text: string;
     chatId: string;
     model: string;
+    sendId: string;
+    messageId: string;
+    id: string;
+    retry: boolean;
     key: string;
+    lastId: string;
     brandKey: string;
   }) {
-    const window = BrowserWindow.getFocusedWindow();
+    try {
+      const window = BrowserWindow.getFocusedWindow();
+      let responseText = "";
+      if (retry && lastId !== "error") {
+        await this.prisma.message.delete({
+          where: {
+            id: lastId,
+          },
+        });
+      }
+      switch (brandKey) {
+        case "zhipu":
+          responseText = await ZHIPUAPI.getCompletions({
+            messages,
+            window,
+            key,
+            chatId,
+            model,
+          });
+          break;
+        case "kimi":
+          responseText = await KIMI.getCompletions({
+            messages,
+            window,
+            chatId,
+            key,
+            model,
+          });
+      }
 
-    switch (brandKey) {
-      case "zhipu":
-        ZHIPUAPI.getCompletions({
-          messages,
-          window,
-          key,
-          model,
-        });
-        break;
-      case "kimi":
-        KIMI.getCompletions({
-          messages,
-          window,
-          key,
-          model,
-        });
+      await this.prisma.message.create({
+        data: {
+          id: messageId,
+          content: text,
+          role: "user",
+          chatId: chatId,
+        },
+      });
+
+      await this.prisma.message.create({
+        data: {
+          id: sendId,
+          content: responseText,
+          role: "assistant",
+          chatId: chatId,
+        },
+      });
+    } catch (error: any) {
+      switch (brandKey) {
+        case "zhipu":
+          return {
+            error: {
+              ...error.error,
+            },
+          };
+        case "kimi":
+          return {
+            error: {
+              ...error.error,
+            },
+          };
+      }
     }
-    const res = await this.prisma.message.create({
-      data: {
-        content: text,
-        role: "user",
-        chatId: chatId,
-      },
-    });
-
-    return res;
   }
   // 插入消息
   async [CHAT_SERVICE.INSERT_MESSAGE](data: {

@@ -28,7 +28,7 @@ import {
   ModalHeader,
   ModalBody,
 } from "@nextui-org/react";
-import { BrandList, ModelItem } from "@/model";
+import { ModelItem } from "@/model";
 import KeyInput from "./key-input";
 
 export interface ChatListProps {
@@ -54,24 +54,26 @@ const ChatList: FC<ChatListProps> = ({ selectChat, data, onChange }) => {
       if (selectChat?.id === id) {
         onChange(undefined);
       }
-      message.success("删除成功");
     } catch (error) {
       message.warning("删除失败");
     } finally {
     }
   };
+
   const items: MenuProps["items"] = [
     {
       label: "删除",
       key: "delete",
     },
   ];
+
   const [brand, setBrand] = useAtom(brandAtom);
   const [currentModel, setCurrentModel] = useAtom(currentModelAtom);
   const addNewChat = () => {
     onChange(undefined);
   };
-  const height = "calc(100vh - 100px)";
+  const height = "calc(100vh - 112px)";
+
   useEffect(() => {
     if (brand) {
       const json = window.localStorage.getItem(brand.name);
@@ -89,6 +91,7 @@ const ChatList: FC<ChatListProps> = ({ selectChat, data, onChange }) => {
       }
     }
   }, [brand]);
+
   const renderModels = (models: ModelItem[]) => {
     const list = models.map((model) => {
       return <DropdownItem key={model.name}>{model.name}</DropdownItem>;
@@ -103,6 +106,7 @@ const ChatList: FC<ChatListProps> = ({ selectChat, data, onChange }) => {
     ];
     return brandSetting;
   };
+
   return (
     <>
       <div className="no-drag flex mt-4  pb-2  justify-between px-2 gap-2  ">

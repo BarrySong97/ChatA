@@ -60,8 +60,12 @@ export class ChatService {
     messages: Partial<Message>[];
     text: string;
     chatId: string;
+    sendId: string;
+    lastId?: string; // 用来删除已经生成的数据
     model: string;
     key: string;
+    retry?: boolean;
+    messageId: string;
     brandKey: string;
   }): Promise<Message> {
     return window.ipcRenderer.invoke(CHAT_SERVICE.SEND_MESSAGE, data);

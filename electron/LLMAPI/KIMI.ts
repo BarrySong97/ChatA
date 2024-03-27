@@ -10,9 +10,11 @@ export class KIMI {
     model,
     messages,
     window,
+    chatId,
   }: {
     key: string;
     model: string;
+    chatId: string;
     messages: GeneralMessageSend;
     window: BrowserWindow | null;
   }) {
@@ -37,20 +39,22 @@ export class KIMI {
       typingInterval = setInterval(() => {
         if (index < totalText.length) {
           typeText += totalText[index++];
-          window?.webContents.send("completions", {
+          window?.webContents.send(`completions`, {
             text: typeText,
             done: false,
+            chatId,
           });
         } else {
           // 完成打字，清除定时器
 
           // 如果当前数据块已经打完，检查是否还有更多的数据块
           // 完成打字，清除定时器
-          window?.webContents.send("completions", {
+          clearInterval(typingInterval);
+          window?.webContents.send(`completions`, {
             text: totalText,
+            chatId,
             done: true,
           });
-          clearInterval(typingInterval);
         }
       }, typeSpeed);
     };
@@ -61,5 +65,6 @@ export class KIMI {
         typeMessage();
       }
     }
+    return totalText;
   }
 }
