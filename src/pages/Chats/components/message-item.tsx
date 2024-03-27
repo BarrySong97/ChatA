@@ -3,10 +3,9 @@ import { CodeBlock } from "@/components/CodeBlock";
 import { FC } from "react";
 import remarkGfm from "remark-gfm";
 import ReactMarkdown from "react-markdown";
-import { Avatar } from "@nextui-org/react";
 import { brandAtom } from "@/atom";
 import { useAtom } from "jotai";
-import UserLogo from "@/assets/grinning-face.webp";
+import { Avatar } from "antd";
 export interface MessageItemProps {
   data: Message;
 }
@@ -16,7 +15,9 @@ const MessageItem: FC<MessageItemProps> = ({ data }) => {
     return (
       <div className="flex flex-row-reverse gap-3 mb-8 justify-start">
         <div className="mb-1">
-          <Avatar isBordered radius="sm" name="U" />
+          <Avatar size={"large"} shape="square">
+            U
+          </Avatar>
         </div>
         <div className="p-2 prose   max-w-[80%] bg-primary rounded-md text-primary-foreground">
           <p>{data.content}</p>
@@ -28,14 +29,10 @@ const MessageItem: FC<MessageItemProps> = ({ data }) => {
     return (
       <div className="flex gap-3 max-w-[80%] mb-8">
         <div className="mb-1">
-          <Avatar
-            color="primary"
-            isBordered
-            radius="sm"
-            src={brand?.icon ?? ""}
-          />
+          <Avatar size={"large"} shape="square" src={brand?.icon!} />
         </div>
         <div className="bg-primary-50 prose  text-primary-900  rounded-md p-2 shadow-sm ">
+          {data?.status === "sending" ? "Sending..." : ""}
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             components={{

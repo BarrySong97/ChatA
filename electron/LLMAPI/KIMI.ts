@@ -2,11 +2,6 @@
 import OpenAI from "openai";
 import { BrowserWindow } from "electron";
 import { GeneralMessageSend } from "../../src/api/models/Chat";
-import {
-  createParser,
-  ParsedEvent,
-  ReconnectInterval,
-} from "eventsource-parser";
 export class KIMI {
   static baseUrl = "https://api.moonshot.cn";
   static API_KEY = "e86d17631e717f545c2079b216e0843d.pURjQfxLu8VIVx49";
@@ -51,21 +46,20 @@ export class KIMI {
 
           // 如果当前数据块已经打完，检查是否还有更多的数据块
           // 完成打字，清除定时器
+          window?.webContents.send("completions", {
+            text: totalText,
+            done: true,
+          });
           clearInterval(typingInterval);
         }
       }, typeSpeed);
     };
     for await (const chunk of response as any) {
       const text = chunk.choices[0].delta.content;
-      const useage = chunk.choices[0].usage;
       if (text) {
         totalText += text;
         typeMessage();
       }
     }
-    window?.webContents.send("completions", {
-      text: totalText,
-      done: true,
-    });
   }
 }

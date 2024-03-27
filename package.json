@@ -1,5 +1,5 @@
 {
-  "name": "meta-analysis",
+  "name": "chat-a",
   "version": "1.0.0",
   "main": "dist-electron/main/index.js",
   "author": "Barry Song",
@@ -17,6 +17,7 @@
     "build:only": "vite build && electron-builder"
   },
   "dependencies": {
+    "@bugsnag/cuid": "^3.0.2",
     "@nextui-org/react": "^2.2.9",
     "@prisma/client": "5.11.0",
     "@tabler/icons-react": "^3.1.0",

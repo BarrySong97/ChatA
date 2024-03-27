@@ -156,6 +156,7 @@ const ChatList: FC<ChatListProps> = ({ selectChat, data, onChange }) => {
                   },
                 }}
                 trigger={["contextMenu"]}
+                key={chat.id}
               >
                 <div
                   key={chat.id}

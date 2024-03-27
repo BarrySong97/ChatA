@@ -3,28 +3,44 @@ import { Divider } from "antd";
 import { FC, useEffect, useRef } from "react";
 import MessageList from "./message-list";
 import ChatInput from "./chat-input";
-import { ScrollShadow } from "@nextui-org/react";
+import cuid from "@bugsnag/cuid";
 import { ChatService } from "@/api/services/ChatService";
 import { useQuery, useQueryClient } from "react-query";
 import { estimateTokenLength } from "@/util";
 import { brandAtom, currentModelAtom } from "@/atom";
 import { useAtom } from "jotai";
+import { useUpdate } from "ahooks";
 export interface ChatboxProps {
   selectChat?: Chat;
   onSelectChat: (chat: Chat) => void;
 }
 const Chatbox: FC<ChatboxProps> = ({ selectChat, onSelectChat }) => {
   const queryClient = useQueryClient();
-
-  const { data: messages } = useQuery<Message[]>(["message", selectChat?.id], {
-    queryFn: () => ChatService.getMessageByChatId(selectChat?.id!),
-    enabled: !!selectChat?.id,
+  const chatRefId = useRef<string>(cuid());
+  if (!selectChat) {
+    selectChat = {
+      id: chatRefId.current,
+      type: "new",
+    } as Chat;
+  }
+  const newChatId = selectChat?.id!;
+  const { data: messages } = useQuery<Message[]>(["messages", newChatId], {
+    queryFn: () =>
+      selectChat?.type === "new"
+        ? []
+        : ChatService.getMessageByChatId(selectChat?.id!),
+    retry: false,
+    cacheTime: Infinity,
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
   });
   const refMessage = useRef<string>("");
   const refId = useRef<string>("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const [currentModel] = useAtom(currentModelAtom);
   const [brand] = useAtom(brandAtom);
+  const sendIdRef = useRef<string>();
+  const messageIdRef = useRef<string>();
   const onSend = async (message: string) => {
     // 计算token
     const messageToken =
@@ -45,41 +61,59 @@ const Chatbox: FC<ChatboxProps> = ({ selectChat, onSelectChat }) => {
         { content: message, role: "user" } as Message,
       ];
     }
-    if (selectChat) {
+    // 为了防止messsage重新创建
+    sendIdRef.current = cuid();
+    messageIdRef.current = cuid();
+    if (selectChat && selectChat.type !== "new") {
       // 在一个已有的chat里面创建
-      // 发送接口，返回用户发送存在数据库里面的消息
-      const res = await ChatService.sendMessage({
-        messages: sendMessages,
-        text: message,
-        chatId: selectChat.id,
-        model: currentModel!.name,
-        key: brand?.key ?? "",
-        brandKey: brand?.id ?? "",
-        // brandKey: brand?.key ?? "",
-      });
-      refId.current = res.id;
-      // 更新ui
 
-      queryClient.setQueryData(
-        ["messages", selectChat.id],
-        (_data: Message[] = []) => {
-          return [
-            ...(messages ?? []),
-            { content: message, role: "user", id: "" + +new Date() } as Message,
-          ];
-        }
-      );
-      queryClient.invalidateQueries(["message", selectChat.id]);
+      queryClient.setQueryData(["messages", newChatId], () => {
+        return [
+          ...(messages ?? []),
+          {
+            content: "",
+            role: "assistant",
+            id: sendIdRef.current,
+            status: "sending",
+          },
+        ];
+      });
+      // 发送接口，返回用户发送存在数据库里面的消息
+      try {
+        const res = await ChatService.sendMessage({
+          messages: sendMessages,
+          text: message,
+          chatId: newChatId,
+          model: currentModel!.name,
+          key: brand?.key ?? "",
+          brandKey: brand?.id ?? "",
+          // brandKey: brand?.key ?? "",
+        });
+        refId.current = res.id;
+        // 更新ui
+      } catch (error) {}
     } else {
       const title = message.trim().slice(0, 12);
 
+      queryClient.setQueryData(
+        ["messages", newChatId],
+        [
+          { content: message, role: "user", id: messageIdRef.current },
+          {
+            content: "",
+            role: "assistant",
+            id: sendIdRef.current,
+            status: "sending",
+          },
+        ]
+      );
       // 创建一个新的chat
-      const chat = await ChatService.createChat(title, brand?.id!);
-
+      const chat = await ChatService.createChat(title, brand?.id!, newChatId);
       // 更新ui
       queryClient.setQueryData(["chats", brand?.id], (data: Chat[] = []) => {
         return [chat, ...data] as Chat[];
       });
+
       // 更新当前chat
       onSelectChat(chat);
 
@@ -87,18 +121,12 @@ const Chatbox: FC<ChatboxProps> = ({ selectChat, onSelectChat }) => {
       const res = await ChatService.sendMessage({
         messages: sendMessages,
         text: message,
-        chatId: chat.id,
+        chatId: newChatId,
         model: currentModel!.name,
         key: brand?.key ?? "",
         brandKey: brand?.id ?? "",
       });
       refId.current = res.id;
-      // 更新ui
-      queryClient.setQueryData(["messages", chat.id], (data: any[] = []) => {
-        return [
-          { content: message, role: "user", id: res.id, status: "sending" },
-        ];
-      });
     }
     // 滚动到底部
   };
@@ -116,41 +144,37 @@ const Chatbox: FC<ChatboxProps> = ({ selectChat, onSelectChat }) => {
       ) => {
         // 更新ui
         const { done, text } = res;
+
         queryClient.setQueryData<Message[]>(
-          ["message", selectChat?.id],
+          ["messages", newChatId],
           (_data: Message[] = []) => {
             const length = _data.length;
+
             if (length % 2 === 0) {
               _data.pop();
             }
+
             return [
               ..._data,
-              { content: text, role: "assistant", id: new Date().getTime() },
+              {
+                content: text,
+                role: "assistant",
+                id: sendIdRef.current,
+                status: done ? "success" : "sending",
+              },
             ] as Message[];
           }
         );
-
         // 插入数据,插入大模型返回的数据到数据库作为消息item
         if (done) {
           const { text } = res;
-          const message = await ChatService.insertMessage({
-            chatId: selectChat?.id!,
+          chatRefId.current = cuid();
+          await ChatService.insertMessage({
+            chatId: newChatId,
             role: "assistant",
             content: text,
             totalTokens: 0,
           });
-          queryClient.setQueryData<Message[]>(
-            ["message", selectChat?.id],
-            (_data: Message[] = []) => {
-              const length = _data.length;
-              const m = _data[length - 1];
-              if (m) {
-                m.id = message.id;
-              }
-              const res = [..._data] as Message[];
-              return res;
-            }
-          );
         }
       }
     );
@@ -163,6 +187,7 @@ const Chatbox: FC<ChatboxProps> = ({ selectChat, onSelectChat }) => {
       top: scrollRef.current?.scrollHeight,
     });
   }, [messages]);
+
   return (
     <div className="flex flex-col h-full">
       <div className="w-full">

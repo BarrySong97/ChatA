@@ -35,6 +35,8 @@ const Side: FC<SideProps> = () => {
     const brandJson = window.localStorage.getItem("brand");
     if (brandJson) {
       const brand = JSON.parse(brandJson);
+      const key = window.localStorage.getItem(`${brand.name}-key`);
+      brand.key = key;
       setBrand(brand);
     } else {
       window.localStorage.setItem("brand", JSON.stringify(BrandList[0]));

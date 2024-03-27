@@ -15,8 +15,17 @@ export class ChatService {
    * @param params 创建chat
    * @returns
    */
-  public static createChat(title: string, brandId: string): Promise<Chat> {
-    return window.ipcRenderer.invoke(CHAT_SERVICE.CREATE_CHAT, title, brandId);
+  public static createChat(
+    title: string,
+    brandId: string,
+    chatId: string
+  ): Promise<Chat> {
+    return window.ipcRenderer.invoke(
+      CHAT_SERVICE.CREATE_CHAT,
+      title,
+      brandId,
+      chatId
+    );
   }
 
   /**

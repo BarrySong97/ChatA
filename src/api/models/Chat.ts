@@ -3,6 +3,7 @@ export type Message = {
   id: string;
   role: Role;
   chatId: string;
+  status?: string;
 };
 
 export type Role = "assistant" | "system" | "user";
@@ -13,6 +14,7 @@ export type Chat = {
   title: string;
   brand_id: string;
   total_tokens: number;
+  type: "new" | "exist";
 };
 export type GeneralMessageSend = {
   role: string;

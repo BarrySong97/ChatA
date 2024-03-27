@@ -25,9 +25,10 @@ export class ChatService {
   }
 
   // 创建chat
-  [CHAT_SERVICE.CREATE_CHAT](title: string, brandId: string) {
+  [CHAT_SERVICE.CREATE_CHAT](title: string, brandId: string, id: string) {
     return this.prisma.chat.create({
       data: {
+        id,
         title: title,
         brand_id: brandId,
       },

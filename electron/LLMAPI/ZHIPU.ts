@@ -1,11 +1,6 @@
 import { BrowserWindow } from "electron";
 import sign from "jwt-encode";
 import { GeneralMessageSend } from "../../src/api/models/Chat";
-import {
-  createParser,
-  ParsedEvent,
-  ReconnectInterval,
-} from "eventsource-parser";
 import OpenAI from "openai";
 export class ZHIPUAPI {
   static baseUrl = "https://open.bigmodel.cn/api/paas/v4/chat/completions";
@@ -65,6 +60,10 @@ export class ZHIPUAPI {
             // 如果当前数据块已经打完，检查是否还有更多的数据块
             // 完成打字，清除定时器
             clearInterval(typingInterval);
+            window?.webContents.send("completions", {
+              text: totalText,
+              done: true,
+            });
           }
         }, typeSpeed);
       };
@@ -75,10 +74,6 @@ export class ZHIPUAPI {
           typeMessage();
         }
       }
-      window?.webContents.send("completions", {
-        text: totalText,
-        done: true,
-      });
     } catch (error) {
       console.log(error);
     }
