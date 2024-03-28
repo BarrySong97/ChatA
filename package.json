@@ -29,6 +29,7 @@
     "electron-updater": "^6.1.1",
     "eventsource-parser": "^1.1.2",
     "framer-motion": "^10.12.16",
+    "html-to-image": "^1.11.11",
     "jotai": "^2.7.1",
     "js-tiktoken": "^1.0.10",
     "jwt-encode": "^1.0.1",

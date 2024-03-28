@@ -70,4 +70,25 @@ export class ChatService {
   }): Promise<Message> {
     return window.ipcRenderer.invoke(CHAT_SERVICE.SEND_MESSAGE, data);
   }
+
+  /**
+   * 编辑chat
+   */
+  public static editChat(data: {
+    id: string;
+    title: string;
+  }): Promise<Message> {
+    return window.ipcRenderer.invoke(CHAT_SERVICE.EDIT_CHAT, data);
+  }
+
+  /**
+   * 编辑消息
+   *
+   */
+  public static editMessage(data: {
+    id: string;
+    content: string;
+  }): Promise<Message> {
+    return window.ipcRenderer.invoke(CHAT_SERVICE.EDIT_MESSAGE, data);
+  }
 }

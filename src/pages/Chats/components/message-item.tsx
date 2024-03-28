@@ -1,24 +1,27 @@
-import { Message } from "@/api/models/Chat";
+import { Chat, Message } from "@/api/models/Chat";
 import { CodeBlock } from "@/components/CodeBlock";
-import React, { FC } from "react";
+import React, { FC, useState } from "react";
 import ReactLoading from "react-loading";
 import remarkGfm from "remark-gfm";
 import ReactMarkdown from "react-markdown";
 import { brandAtom } from "@/atom";
 import { useAtom } from "jotai";
 import { Avatar, message } from "antd";
-import { Button, Tooltip } from "@nextui-org/react";
+import { Button } from "@nextui-org/react";
 import {
-  MaterialSymbolsImageOutline,
+  MdiShare,
   SolarCopyOutline,
+  SolarPenBold,
   SolarRefreshBold,
   SolarStopCircleBold,
 } from "@/assets/icon";
+import EditMessage from "./edit-message";
 
 export interface MessageItemProps {
   data: Message;
   onStop: () => void;
   onRetry: () => void;
+  chat?: Chat;
   isLast: boolean;
 }
 const MessageItem: FC<MessageItemProps> = ({
@@ -28,12 +31,20 @@ const MessageItem: FC<MessageItemProps> = ({
   onRetry,
 }) => {
   const [brand] = useAtom(brandAtom);
-
-  const actions = [
+  const [showModal, setShowModal] = useState(false);
+  const commonActions = [
+    {
+      title: "编辑",
+      icon: <SolarPenBold />,
+      show: true,
+      onClick: () => {
+        setShowModal(true);
+      },
+    },
     {
       title: "复制",
       icon: <SolarCopyOutline />,
-      onclick: async () => {
+      onClick: async () => {
         try {
           await navigator.clipboard.writeText(data.content);
           message.success("复制成功");
@@ -43,50 +54,58 @@ const MessageItem: FC<MessageItemProps> = ({
       },
       show: true,
     },
+  ];
+  const actions = [
+    ...commonActions,
     {
       title: "再试一次",
       icon: <SolarRefreshBold />,
-      onclick: onRetry,
+      onClick: onRetry,
       show: isLast,
     },
     {
       title: "分享",
-      icon: <MaterialSymbolsImageOutline />,
-      onclick: () => {},
+      icon: <MdiShare />,
+      onClick: () => {},
       show: true,
     },
   ];
   const renderUser = () => {
     return (
-      <div className="flex message-item flex-row-reverse gap-3 mb-5 justify-start">
+      <div className="flex  flex-row-reverse gap-3 mb-3 justify-start">
         <div className="mb-1">
           <Avatar size={"large"} shape="square">
             U
           </Avatar>
         </div>
-        <div className="max-w-[50%] ">
+        <div className="max-w-[50%] message-item">
           <div className="p-2 prose   bg-primary rounded-md text-primary-foreground">
             <p>{data.content}</p>
           </div>
-          <div className="flex justify-end message-action-items ">
-            <Button
-              size="sm"
-              onClick={actions[0].onclick}
-              style={
-                {
-                  "--text-count": `${actions[0].title.length}em`,
-                  "--min-width": "var(--nextui-spacing-unit-16)",
-                } as React.CSSProperties
-              }
-              isIconOnly
-              startContent={
-                <span className="text-base">{actions[0].icon}</span>
-              }
-              className="message-action-item"
-              variant="flat"
-            >
-              <div className="message-action-item-text">{actions[0].title}</div>
-            </Button>
+          <div className="flex gap-2 justify-end message-action-items ">
+            {commonActions.map((action) => {
+              return (
+                <Button
+                  size="sm"
+                  onClick={action.onClick}
+                  style={
+                    {
+                      "--text-count": `${action.title.length}em`,
+                      "--min-width": "var(--nextui-spacing-unit-16)",
+                    } as React.CSSProperties
+                  }
+                  startContent={
+                    <span className="message-action-item-icon text-base">
+                      {action.icon}
+                    </span>
+                  }
+                  className=" justify-center message-action-item   text-default-600 p-0"
+                  variant="flat"
+                >
+                  <div className="message-action-item-text">{action.title}</div>
+                </Button>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -94,13 +113,13 @@ const MessageItem: FC<MessageItemProps> = ({
   };
   const renderAssist = () => {
     return (
-      <div className="mb-5 message-item">
+      <div className="mb-3 ">
         <div className="flex  gap-3 justify-start  ">
           <div className="mb-1 relative">
             <Avatar size={"large"} shape="square" src={brand?.icon!} />
           </div>
 
-          <div>
+          <div className="message-item">
             <div className="bg-primary-50 prose max-w-[50vw]  relative   text-primary-900  rounded-md p-2 shadow-sm ">
               {data.status === "sending" ? (
                 <ReactLoading color={"#bac4d4"} height={32} width={32} />
@@ -160,13 +179,13 @@ const MessageItem: FC<MessageItemProps> = ({
                     return (
                       <Button
                         size="sm"
-                        onClick={action.onclick}
+                        onClick={action.onClick}
                         style={
                           {
                             "--text-count": `${action.title.length}em`,
                             "--min-width":
-                              index === 1
-                                ? `var(--nextui-spacing-unit-20)`
+                              action.title === "再试一次"
+                                ? `var(--nextui-spacing-unit-24)`
                                 : "var(--nextui-spacing-unit-16)",
                           } as React.CSSProperties
                         }
@@ -204,7 +223,16 @@ const MessageItem: FC<MessageItemProps> = ({
       </div>
     );
   };
-  return data.role === "user" ? renderUser() : renderAssist();
+  return (
+    <>
+      {data.role === "user" ? renderUser() : renderAssist()}
+      <EditMessage
+        message={data}
+        isOpen={showModal}
+        onOpenChange={(v) => setShowModal(v)}
+      />
+    </>
+  );
 };
 
 export default MessageItem;

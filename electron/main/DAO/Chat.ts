@@ -34,6 +34,15 @@ export class ChatService {
       },
     });
   }
+  // 編輯chat
+  [CHAT_SERVICE.EDIT_CHAT](data: { title: string; id: string }) {
+    return this.prisma.chat.update({
+      where: {
+        id: data.id,
+      },
+      data: data,
+    });
+  }
   // 删除chat
   [CHAT_SERVICE.DELETE_CHAT](id: string) {
     return this.prisma.chat.delete({
@@ -143,6 +152,16 @@ export class ChatService {
           };
       }
     }
+  }
+  async [CHAT_SERVICE.EDIT_MESSAGE](data: { id: string; content: string }) {
+    await this.prisma.message.update({
+      where: {
+        id: data.id,
+      },
+      data: {
+        content: data.content,
+      },
+    });
   }
   // 插入消息
   async [CHAT_SERVICE.INSERT_MESSAGE](data: {

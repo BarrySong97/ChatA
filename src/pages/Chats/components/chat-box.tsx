@@ -9,6 +9,7 @@ import { useQuery, useQueryClient } from "react-query";
 import { estimateTokenLength } from "@/util";
 import { brandAtom, currentModelAtom } from "@/atom";
 import { useAtom } from "jotai";
+import ChatHeader from "./chat-header";
 export interface ChatboxProps {
   selectChat?: Chat;
   onSelectChat: (chat: Chat) => void;
@@ -104,8 +105,6 @@ const Chatbox: FC<ChatboxProps> = ({ selectChat, onSelectChat }) => {
       });
       // 发送接口，返回用户发送存在数据库里面的消息
       try {
-        console.log(sendMessages);
-
         const res = await ChatService.sendMessage({
           messages: sendMessages,
           text: message,
@@ -310,12 +309,15 @@ const Chatbox: FC<ChatboxProps> = ({ selectChat, onSelectChat }) => {
       onSend(last.content, true, deleteId);
     }
   };
+  const lasMessage = messages?.[messages.length - 1];
   return (
     <div className="flex flex-col h-full">
       <div className="w-full">
-        <div className="p-4 pb-0 text-large font-semibold">
-          {selectChat?.title ?? "新的会话"}
-        </div>
+        <ChatHeader
+          length={messages?.length ?? 0}
+          onSelectChat={onSelectChat}
+          currentChat={selectChat}
+        />
         <Divider className="mt-2 w-full mb-0" />
       </div>
       <div
@@ -325,7 +327,11 @@ const Chatbox: FC<ChatboxProps> = ({ selectChat, onSelectChat }) => {
         <MessageList onStop={onStop} onRetry={onRetry} data={messages} />
       </div>
       <div className="pb-4">
-        <ChatInput onSend={onSend} currentChat={selectChat} />
+        <ChatInput
+          lasMessage={lasMessage}
+          onSend={onSend}
+          currentChat={selectChat}
+        />
       </div>
     </div>
   );
