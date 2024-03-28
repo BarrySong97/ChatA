@@ -28,43 +28,53 @@ export class KIMI {
       stream: true,
     });
     let totalText = "";
-    let typingInterval: any = null; // 用于存储定时器ID，以便取消定时器
-    let index = 0; // 当前打字的索引
-    let typeText = "";
-    const typeMessage = () => {
-      const typeSpeed = 30; // 设置每个字符的打字速度（毫秒）
+    // let typingInterval: any = null; // 用于存储定时器ID，以便取消定时器
+    // let index = 0; // 当前打字的索引
+    // let typeText = "";
+    // const typeMessage = () => {
+    //   const typeSpeed = 30; // 设置每个字符的打字速度（毫秒）
 
-      // 清除之前的定时器
-      clearInterval(typingInterval);
-      typingInterval = setInterval(() => {
-        if (index < totalText.length) {
-          typeText += totalText[index++];
-          window?.webContents.send(`completions`, {
-            text: typeText,
-            done: false,
-            chatId,
-          });
-        } else {
-          // 完成打字，清除定时器
+    //   // 清除之前的定时器
+    //   clearInterval(typingInterval);
+    //   typingInterval = setInterval(() => {
+    //     if (index < totalText.length) {
+    //       typeText += totalText[index++];
+    //       window?.webContents.send(`completions`, {
+    //         text: typeText,
+    //         done: false,
+    //         chatId,
+    //       });
+    //     } else {
+    //       // 完成打字，清除定时器
 
-          // 如果当前数据块已经打完，检查是否还有更多的数据块
-          // 完成打字，清除定时器
-          clearInterval(typingInterval);
-          window?.webContents.send(`completions`, {
-            text: totalText,
-            chatId,
-            done: true,
-          });
-        }
-      }, typeSpeed);
-    };
+    //       // 如果当前数据块已经打完，检查是否还有更多的数据块
+    //       // 完成打字，清除定时器
+
+    //       clearInterval(typingInterval);
+    //       window?.webContents.send(`completions`, {
+    //         text: totalText,
+    //         chatId,
+    //         done: true,
+    //       });
+    //     }
+    //   }, typeSpeed);
+    // };
     for await (const chunk of response as any) {
       const text = chunk.choices[0].delta.content;
       if (text) {
         totalText += text;
-        typeMessage();
+        window?.webContents.send(`completions`, {
+          text: totalText,
+          done: false,
+          chatId,
+        });
       }
     }
+    window?.webContents.send(`completions`, {
+      text: totalText,
+      done: true,
+      chatId,
+    });
     return totalText;
   }
 }

@@ -50,7 +50,7 @@ const MessageItem: FC<MessageItemProps> = ({
       show: isLast,
     },
     {
-      title: "截图",
+      title: "分享",
       icon: <MaterialSymbolsImageOutline />,
       onclick: () => {},
       show: true,
@@ -157,6 +157,7 @@ const MessageItem: FC<MessageItemProps> = ({
               startContent={<SolarStopCircleBold className="text-xl" />}
               className="mt-2"
               onClick={onStop}
+              size="sm"
               variant="flat"
             >
               停止生成

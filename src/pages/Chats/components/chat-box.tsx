@@ -45,13 +45,22 @@ const Chatbox: FC<ChatboxProps> = ({ selectChat, onSelectChat }) => {
   const refMessage = useRef<string>("");
   const refId = useRef<string>("");
   const scrollRef = useRef<HTMLDivElement>(null);
+  // 实现流式打字机效果，可以控制速度
+  const typeTextRef = useRef<string>("");
+  const typeIndexRef = useRef<number>(0);
+  const totaTextRef = useRef<string>("");
+  const typeDoneRef = useRef<boolean>(false);
   const [currentModel] = useAtom(currentModelAtom);
   const [brand] = useAtom(brandAtom);
   // 消息回复id
   const sendIdRef = useRef<string>();
   //用户发送id
   const messageIdRef = useRef<string>();
-  const onSend = async (message: string, retry?: boolean, lastId?: string) => {
+  const onSend = async (
+    message: string,
+    retry?: boolean,
+    deleteId?: string
+  ) => {
     // 计算token
     // 为了防止messsage重新创建
     sendIdRef.current = cuid();
@@ -95,11 +104,13 @@ const Chatbox: FC<ChatboxProps> = ({ selectChat, onSelectChat }) => {
       });
       // 发送接口，返回用户发送存在数据库里面的消息
       try {
+        console.log(sendMessages);
+
         const res = await ChatService.sendMessage({
           messages: sendMessages,
           text: message,
           chatId: newChatId,
-          lastId,
+          deleteId: deleteId,
           retry,
           model: currentModel!.name,
           messageId: messageIdRef.current!,
@@ -192,6 +203,49 @@ const Chatbox: FC<ChatboxProps> = ({ selectChat, onSelectChat }) => {
     }
     // 滚动到底部
   };
+  let typingInterval: any = null; // 用于存储定时器ID，以便取消定时器
+  const typeMessage = () => {
+    const typeSpeed = 30; // 设置每个字符的打字速度（毫秒）
+    // 清除之前的定时器
+    clearInterval(typingInterval);
+    typingInterval = setInterval(() => {
+      if (typeIndexRef.current < totaTextRef.current.length) {
+        typeTextRef.current += totaTextRef.current[typeIndexRef.current++];
+        queryClient.setQueryData<Message[]>(
+          ["messages", newChatId],
+          (_data: Message[] = []) => {
+            const length = _data.length;
+            if (length % 2 === 0) {
+              _data.pop();
+            }
+
+            return [
+              ..._data,
+              {
+                content: typeTextRef.current,
+                role: "assistant",
+                id: sendIdRef.current,
+                status: "typing",
+              },
+            ] as Message[];
+          }
+        );
+      } else {
+        clearInterval(typingInterval);
+        if (typeDoneRef.current) {
+          queryClient.setQueryData<Message[]>(
+            ["messages", newChatId],
+            (_data: Message[] = []) => {
+              const length = _data.length;
+              const last = _data[length - 1];
+              last.status = "success";
+              return [..._data] as Message[];
+            }
+          );
+        }
+      }
+    }, typeSpeed);
+  };
   useEffect(() => {
     // 监听流数据
     window.ipcRenderer.on(
@@ -210,39 +264,12 @@ const Chatbox: FC<ChatboxProps> = ({ selectChat, onSelectChat }) => {
         if (newChatId !== chatId) {
           return;
         }
-
-        queryClient.setQueryData<Message[]>(
-          ["messages", newChatId],
-          (_data: Message[] = []) => {
-            const length = _data.length;
-            if (length % 2 === 0) {
-              _data.pop();
-            }
-
-            return [
-              ..._data,
-              {
-                content: text,
-                role: "assistant",
-                id: sendIdRef.current,
-                status: "typing",
-              },
-            ] as Message[];
-          }
-        );
+        totaTextRef.current = text;
+        typeMessage();
         // 插入数据,插入大模型返回的数据到数据库作为消息item
+        typeDoneRef.current = done;
         if (done) {
-          const { text } = res;
           chatRefId.current = cuid();
-          queryClient.setQueryData<Message[]>(
-            ["messages", newChatId],
-            (_data: Message[] = []) => {
-              const length = _data.length;
-              const last = _data[length - 1];
-              last.status = "success";
-              return [..._data] as Message[];
-            }
-          );
         }
       }
     );

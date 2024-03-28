@@ -61,7 +61,7 @@ export class ChatService {
     text: string;
     chatId: string;
     sendId: string;
-    lastId?: string; // 用来删除已经生成的数据
+    deleteId?: string; // 用来删除已经生成的数据
     model: string;
     key: string;
     retry?: boolean;

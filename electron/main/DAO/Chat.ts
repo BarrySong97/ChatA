@@ -61,7 +61,7 @@ export class ChatService {
     chatId,
     model,
     key,
-    lastId,
+    deleteId,
     retry,
     messageId,
     brandKey,
@@ -75,16 +75,17 @@ export class ChatService {
     id: string;
     retry: boolean;
     key: string;
-    lastId: string;
+    deleteId: string;
     brandKey: string;
   }) {
     try {
       const window = BrowserWindow.getFocusedWindow();
       let responseText = "";
-      if (retry && lastId !== "error") {
+      // 如果最后一个时报错，那么其实不用删除
+      if (retry && deleteId !== "error") {
         await this.prisma.message.delete({
           where: {
-            id: lastId,
+            id: deleteId,
           },
         });
       }
@@ -107,15 +108,16 @@ export class ChatService {
             model,
           });
       }
-
-      await this.prisma.message.create({
-        data: {
-          id: messageId,
-          content: text,
-          role: "user",
-          chatId: chatId,
-        },
-      });
+      if (!retry) {
+        await this.prisma.message.create({
+          data: {
+            id: messageId,
+            content: text,
+            role: "user",
+            chatId: chatId,
+          },
+        });
+      }
 
       await this.prisma.message.create({
         data: {
