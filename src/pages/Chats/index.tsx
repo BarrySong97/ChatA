@@ -1,4 +1,5 @@
-import React, { FC, useState } from "react";
+import { FC, useState } from "react";
+import "./index.css";
 import ChatList from "./components/chat-list";
 import { Divider } from "@nextui-org/react";
 import { useQuery } from "react-query";

@@ -1,13 +1,5 @@
 import DragTitle from "@/components/DragTitle";
-import {
-  Button,
-  Dropdown,
-  DropdownItem,
-  DropdownMenu,
-  DropdownTrigger,
-  NextUIProvider,
-  User,
-} from "@nextui-org/react";
+import { NextUIProvider } from "@nextui-org/react";
 import { FC } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import Side from "./components/side";
