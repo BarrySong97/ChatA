@@ -10,7 +10,8 @@ body {
 
 .scrollbar::-webkit-scrollbar {
     background-color: transparent;
-    width: 10px
+    width: 8px;
+    height: 8px;
 }
 
 /* background of the scrollbar except button or resizer */
@@ -26,7 +27,7 @@ body {
 .scrollbar::-webkit-scrollbar-thumb {
     background-color: #babac0;
     border-radius: 16px;
-    border: 1px solid #fff;
+    /* border: 1px solid #fff; */
 }
 
 .scrollbar::-webkit-scrollbar-thumb:hover {

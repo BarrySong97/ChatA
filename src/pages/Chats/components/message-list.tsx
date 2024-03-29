@@ -7,10 +7,16 @@ import KeyInput from "./key-input";
 export interface MessageListProps {
   chat?: Chat;
   data?: Message[];
-  onStop: () => void;
-  onRetry: () => void;
+  onStop?: () => void;
+  onRetry?: () => void;
+  showActions?: boolean;
 }
-const MessageList: FC<MessageListProps> = ({ onRetry, onStop, data }) => {
+const MessageList: FC<MessageListProps> = ({
+  showActions = true,
+  onRetry,
+  onStop,
+  data,
+}) => {
   const [brand] = useAtom(brandAtom);
 
   const [key, setKey] = useState<string>();
@@ -21,6 +27,7 @@ const MessageList: FC<MessageListProps> = ({ onRetry, onStop, data }) => {
         <MessageItem
           onRetry={onRetry}
           isLast={isLast}
+          showActions={showActions}
           onStop={onStop}
           key={v.id}
           data={v as Message}

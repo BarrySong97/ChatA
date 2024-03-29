@@ -124,6 +124,7 @@ const ChatHeader: FC<ChatHeaderProps> = ({
       </div>
       <ExportMessages
         isOpen={showModal}
+        selectChat={currentChat}
         onOpenChange={(v) => setshowModal(v)}
       />
     </div>

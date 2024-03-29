@@ -16,17 +16,20 @@ import {
   SolarStopCircleBold,
 } from "@/assets/icon";
 import EditMessage from "./edit-message";
+import clsx from "clsx";
 
 export interface MessageItemProps {
   data: Message;
-  onStop: () => void;
-  onRetry: () => void;
+  onStop?: () => void;
+  onRetry?: () => void;
   chat?: Chat;
+  showActions?: boolean;
   isLast: boolean;
 }
 const MessageItem: FC<MessageItemProps> = ({
   isLast,
   data,
+  showActions = true,
   onStop,
   onRetry,
 }) => {
@@ -71,56 +74,68 @@ const MessageItem: FC<MessageItemProps> = ({
     },
   ];
   const renderUser = () => {
+    const className = clsx("flex  flex-row-reverse gap-3  justify-start", {
+      "mb-8": !showActions,
+      "mb-3": showActions,
+    });
     return (
-      <div className="flex  flex-row-reverse gap-3 mb-3 justify-start">
+      <div className={className}>
         <div className="mb-1">
           <Avatar size={"large"} shape="square">
             U
           </Avatar>
         </div>
         <div className="max-w-[50%] message-item">
-          <div className="p-2 prose   bg-primary rounded-md text-primary-foreground">
+          <div className="p-2 px-4 prose   bg-primary rounded-md text-primary-foreground">
             <p>{data.content}</p>
           </div>
           <div className="flex gap-2 justify-end message-action-items ">
-            {commonActions.map((action) => {
-              return (
-                <Button
-                  size="sm"
-                  onClick={action.onClick}
-                  style={
-                    {
-                      "--text-count": `${action.title.length}em`,
-                      "--min-width": "var(--nextui-spacing-unit-16)",
-                    } as React.CSSProperties
-                  }
-                  startContent={
-                    <span className="message-action-item-icon text-base">
-                      {action.icon}
-                    </span>
-                  }
-                  className=" justify-center message-action-item   text-default-600 p-0"
-                  variant="flat"
-                >
-                  <div className="message-action-item-text">{action.title}</div>
-                </Button>
-              );
-            })}
+            {showActions
+              ? commonActions.map((action) => {
+                  return (
+                    <Button
+                      size="sm"
+                      onClick={action.onClick}
+                      style={
+                        {
+                          "--text-count": `${action.title.length}em`,
+                          "--min-width": "var(--nextui-spacing-unit-16)",
+                        } as React.CSSProperties
+                      }
+                      startContent={
+                        <span className="message-action-item-icon text-base">
+                          {action.icon}
+                        </span>
+                      }
+                      className=" justify-center message-action-item   text-default-600 p-0"
+                      variant="flat"
+                    >
+                      <div className="message-action-item-text">
+                        {action.title}
+                      </div>
+                    </Button>
+                  );
+                })
+              : null}
           </div>
         </div>
       </div>
     );
   };
   const renderAssist = () => {
+    const className = clsx({
+      "mb-8": !showActions,
+      "mb-3": showActions,
+    });
     return (
-      <div className="mb-3 ">
+      <div className={className}>
         <div className="flex  gap-3 justify-start  ">
           <div className="mb-1 relative">
             <Avatar size={"large"} shape="square" src={brand?.icon!} />
           </div>
 
           <div className="message-item">
-            <div className="bg-primary-50 prose max-w-[50vw]  relative   text-primary-900  rounded-md p-2 shadow-sm ">
+            <div className="bg-primary-50 prose max-w-[65%]  relative   text-primary-900  rounded-md p-2 px-4 shadow-sm ">
               {data.status === "sending" ? (
                 <ReactLoading color={"#bac4d4"} height={32} width={32} />
               ) : null}
@@ -169,9 +184,10 @@ const MessageItem: FC<MessageItemProps> = ({
                 {data.content}
               </ReactMarkdown>
             </div>
-            {!data.status ||
-            data.status === "success" ||
-            data.status === "error" ? (
+            {(!data.status ||
+              data.status === "success" ||
+              data.status === "error") &&
+            showActions ? (
               <div className="message-action-items mt-0 flex gap-2 justify-start">
                 {actions
                   .filter((v) => v.show)
