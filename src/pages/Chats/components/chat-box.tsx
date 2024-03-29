@@ -10,6 +10,8 @@ import { estimateTokenLength } from "@/util";
 import { brandAtom, currentModelAtom } from "@/atom";
 import { useAtom } from "jotai";
 import ChatHeader from "./chat-header";
+import useScrollFunctions from "@/hooks";
+import { Button } from "@nextui-org/react";
 export interface ChatboxProps {
   selectChat?: Chat;
   onSelectChat: (chat: Chat) => void;
@@ -43,14 +45,14 @@ const Chatbox: FC<ChatboxProps> = ({ selectChat, onSelectChat }) => {
     staleTime: Infinity,
     refetchOnWindowFocus: false,
   });
-  const refMessage = useRef<string>("");
-  const refId = useRef<string>("");
   const scrollRef = useRef<HTMLDivElement>(null);
   // 实现流式打字机效果，可以控制速度
   const typeTextRef = useRef<string>("");
   const typeIndexRef = useRef<number>(0);
   const totaTextRef = useRef<string>("");
   const typeDoneRef = useRef<boolean>(false);
+  const stopTypeDoneRef = useRef<boolean>(false);
+
   const [currentModel] = useAtom(currentModelAtom);
   const [brand] = useAtom(brandAtom);
   // 消息回复id
@@ -72,8 +74,7 @@ const Chatbox: FC<ChatboxProps> = ({ selectChat, onSelectChat }) => {
         (pre, cur) => pre + estimateTokenLength(cur.content),
         0
       ) ?? 0;
-    let sendMessages: Partial<Message>[] = [{}];
-    refMessage.current = message;
+    let sendMessages: Partial<Message>[] = [];
     // 超过特定token就裁剪
     if (messageToken >= 8192) {
       const n = messages?.length ?? 0;
@@ -103,6 +104,7 @@ const Chatbox: FC<ChatboxProps> = ({ selectChat, onSelectChat }) => {
           },
         ];
       });
+
       // 发送接口，返回用户发送存在数据库里面的消息
       try {
         const res = await ChatService.sendMessage({
@@ -118,13 +120,11 @@ const Chatbox: FC<ChatboxProps> = ({ selectChat, onSelectChat }) => {
           brandKey: brand?.id ?? "",
           // brandKey: brand?.key ?? "",
         });
-        refId.current = res.id;
-        // 更新ui
-        const { error } = res as any;
 
-        if (!error) {
-          refId.current = res.id;
-        } else {
+        // 更新ui
+        const { error } = (res as any) || {};
+
+        if (error) {
           queryClient.setQueryData(["messages", newChatId], () => {
             return [
               ...(messages ?? []),
@@ -178,11 +178,9 @@ const Chatbox: FC<ChatboxProps> = ({ selectChat, onSelectChat }) => {
           key: brand?.key ?? "",
           brandKey: brand?.id ?? "",
         });
-        const { error } = res as any;
+        const { error } = (res as any) || {};
 
-        if (!error) {
-          refId.current = res.id;
-        } else {
+        if (error) {
           queryClient.setQueryData(["messages", newChatId], () => {
             return [
               ...(messages ?? []),
@@ -204,10 +202,15 @@ const Chatbox: FC<ChatboxProps> = ({ selectChat, onSelectChat }) => {
   };
   let typingInterval: any = null; // 用于存储定时器ID，以便取消定时器
   const typeMessage = () => {
-    const typeSpeed = 30; // 设置每个字符的打字速度（毫秒）
+    const typeSpeed = 20; // 设置每个字符的打字速度（毫秒）
     // 清除之前的定时器
+
     clearInterval(typingInterval);
     typingInterval = setInterval(() => {
+      if (stopTypeDoneRef.current) {
+        clearInterval(typingInterval);
+        return;
+      }
       if (typeIndexRef.current < totaTextRef.current.length) {
         typeTextRef.current += totaTextRef.current[typeIndexRef.current++];
         queryClient.setQueryData<Message[]>(
@@ -241,49 +244,64 @@ const Chatbox: FC<ChatboxProps> = ({ selectChat, onSelectChat }) => {
               return [..._data] as Message[];
             }
           );
+          ChatService.insertMessage({
+            id: sendIdRef.current,
+            content: totaTextRef.current,
+            role: "assistant",
+            chatId: newChatId,
+          });
+          stopTypeDoneRef.current = false;
+          typeIndexRef.current = 0;
+          typeTextRef.current = "";
+          totaTextRef.current = "";
         }
       }
     }, typeSpeed);
   };
+  const gettingText = async (
+    _: any,
+    res: {
+      text: string;
+      done: boolean;
+      chatId: string;
+      messageId: string;
+      totalTokens: number;
+    }
+  ) => {
+    // 更新ui
+    const { done, text, chatId, messageId } = res;
+    if (newChatId !== chatId || messageId !== messageIdRef.current) {
+      return;
+    }
+    totaTextRef.current = text;
+
+    typeMessage();
+    // 插入数据,插入大模型返回的数据到数据库作为消息item
+    typeDoneRef.current = done;
+    if (done) {
+      chatRefId.current = cuid();
+    }
+  };
   useEffect(() => {
     // 监听流数据
-    window.ipcRenderer.on(
-      `completions`,
-      async (
-        _,
-        res: {
-          text: string;
-          done: boolean;
-          chatId: string;
-          totalTokens: number;
-        }
-      ) => {
-        // 更新ui
-        const { done, text, chatId } = res;
-        if (newChatId !== chatId) {
-          return;
-        }
-        totaTextRef.current = text;
-        typeMessage();
-        // 插入数据,插入大模型返回的数据到数据库作为消息item
-        typeDoneRef.current = done;
-        if (done) {
-          chatRefId.current = cuid();
-        }
-      }
-    );
+    window.ipcRenderer.on(`completions`, gettingText);
     return () => {
       window.ipcRenderer.removeAllListeners(`completions`);
     };
   }, [newChatId]);
-  useEffect(() => {
-    scrollRef.current?.scrollTo({
-      top: scrollRef.current?.scrollHeight,
-    });
-  }, [messages]);
 
   const onStop = async () => {
-    window.ipcRenderer.removeAllListeners(`completions`);
+    clearInterval(typingInterval);
+    ChatService.stop();
+    // 重置
+    typeDoneRef.current = true;
+    stopTypeDoneRef.current = true;
+    sendIdRef.current = cuid();
+    messageIdRef.current = cuid();
+    typeIndexRef.current = 0;
+    typeTextRef.current = "";
+    totaTextRef.current = "";
+
     queryClient.setQueryData<Message[]>(
       ["messages", newChatId],
       (_data: Message[] = []) => {
@@ -293,6 +311,8 @@ const Chatbox: FC<ChatboxProps> = ({ selectChat, onSelectChat }) => {
         return [..._data] as Message[];
       }
     );
+    typeDoneRef.current = false;
+    stopTypeDoneRef.current = false;
   };
   const onRetry = async () => {
     const messages = queryClient.getQueryData<Message[]>([
@@ -310,6 +330,9 @@ const Chatbox: FC<ChatboxProps> = ({ selectChat, onSelectChat }) => {
     }
   };
   const lasMessage = messages?.[messages.length - 1];
+  // const { scrollToTop, scrollToBottom, isAtBottom, isAtTop } =
+  //   useScrollFunctions(scrollRef);
+
   return (
     <div className="flex flex-col h-full">
       <div className="w-full">
@@ -322,9 +345,12 @@ const Chatbox: FC<ChatboxProps> = ({ selectChat, onSelectChat }) => {
       </div>
       <div
         ref={scrollRef}
-        className="flex-1 overflow-auto  scrollbar px-4 pt-3 pb-4"
+        className=" flex-1 overflow-auto  scrollbar px-4 pt-3 pb-4"
       >
         <MessageList onStop={onStop} onRetry={onRetry} data={messages} />
+      </div>
+      <div className="absolute bottom-20 flex right-4 gap-2">
+        {/* {!isAtBottom ? <Button variant="flat">2</Button> : null} {!isAtTop ? <Button variant="flat">2</Button> : null} */}
       </div>
       <div className="pb-4">
         <ChatInput

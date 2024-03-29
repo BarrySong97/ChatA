@@ -30,6 +30,7 @@ import {
 } from "@nextui-org/react";
 import { ModelItem } from "@/model";
 import KeyInput from "./key-input";
+import React from "react";
 
 export interface ChatListProps {
   data?: Chat[];
@@ -258,4 +259,4 @@ const ChatList: FC<ChatListProps> = ({ selectChat, data, onChange }) => {
   );
 };
 
-export default ChatList;
+export default React.memo(ChatList);

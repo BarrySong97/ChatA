@@ -28,7 +28,8 @@ const ExportMessages: FC<ExportMessagesProps> = ({
   const [current, setCurrent] = useState(0);
   const [brand] = useAtom(brandAtom);
   const [checkdMessages, setCheckdMessages] = useState<Message[]>([]);
-  const [imageLoading, setImageLoading] = useState(false);
+  const [imageCopyLoading, setImageCopyLoading] = useState(false);
+  const [imageDownloadLoading, setImageDownloadLoading] = useState(false);
   const onChange = (value: number) => {
     setCurrent(value);
   };
@@ -62,7 +63,7 @@ const ExportMessages: FC<ExportMessagesProps> = ({
   const onDownload = async () => {
     if (messageContainerRef.current) {
       try {
-        setImageLoading(true);
+        setImageCopyLoading(true);
         const blob = await toBlob(messageContainerRef.current, {
           backgroundColor: "white",
         });
@@ -81,16 +82,19 @@ const ExportMessages: FC<ExportMessagesProps> = ({
       } catch (error) {
         message.error("下载失败");
       } finally {
-        setImageLoading(false);
+        setImageCopyLoading(false);
       }
     }
   };
   const onCopy = async () => {
     if (messageContainerRef.current) {
       try {
-        setImageLoading(true);
+        setImageDownloadLoading(true);
         const blob = await toBlob(messageContainerRef.current, {
           backgroundColor: "white",
+          style: {
+            width: "800px",
+          },
         });
         // dataurl 转成图片
         if (!blob) return;
@@ -103,7 +107,7 @@ const ExportMessages: FC<ExportMessagesProps> = ({
       } catch (error) {
         message.error("复制失败");
       } finally {
-        setImageLoading(false);
+        setImageDownloadLoading(false);
       }
     }
   };
@@ -176,15 +180,27 @@ const ExportMessages: FC<ExportMessagesProps> = ({
     return (
       <div className="">
         <div className="flex gap-2 mb-4 justify-end">
-          <Button onClick={onDownload} variant="flat" size="sm" radius="sm">
+          <Button
+            isLoading={imageCopyLoading}
+            onClick={onDownload}
+            variant="flat"
+            size="sm"
+            radius="sm"
+          >
             下载图片
           </Button>
-          <Button onClick={onCopy} variant="flat" size="sm" radius="sm">
+          <Button
+            isLoading={imageCopyLoading}
+            onClick={onCopy}
+            variant="flat"
+            size="sm"
+            radius="sm"
+          >
             复制图片
           </Button>
         </div>
         <div className="overflow-auto h-[500px] scrollbar ">
-          <div ref={messageContainerRef} className="py-2">
+          <div ref={messageContainerRef} className="py-2 px-2">
             <MessageList
               showActions={false}
               chat={selectChat}

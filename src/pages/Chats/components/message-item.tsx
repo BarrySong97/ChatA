@@ -1,6 +1,6 @@
 import { Chat, Message } from "@/api/models/Chat";
 import { CodeBlock } from "@/components/CodeBlock";
-import React, { FC, useState } from "react";
+import React, { FC, useMemo, useState } from "react";
 import ReactLoading from "react-loading";
 import remarkGfm from "remark-gfm";
 import ReactMarkdown from "react-markdown";
@@ -135,7 +135,13 @@ const MessageItem: FC<MessageItemProps> = ({
           </div>
 
           <div className="message-item">
-            <div className="bg-primary-50 prose max-w-[65%]  relative   text-primary-900  rounded-md p-2 px-4 shadow-sm ">
+            <div
+              className={
+                showActions
+                  ? "bg-primary-50 prose max-w-[60vw]  relative   text-primary-900  rounded-md p-2 px-4 shadow-sm "
+                  : "bg-primary-50 prose max-w-[80%]  relative   text-primary-900  rounded-md p-2 px-4 shadow-sm "
+              }
+            >
               {data.status === "sending" ? (
                 <ReactLoading color={"#bac4d4"} height={32} width={32} />
               ) : null}
@@ -239,9 +245,14 @@ const MessageItem: FC<MessageItemProps> = ({
       </div>
     );
   };
+  const User = useMemo(() => renderUser(), [data.id]);
+  const Assitant = useMemo(
+    () => renderAssist(),
+    [data.id, data.status, data.content]
+  );
   return (
     <>
-      {data.role === "user" ? renderUser() : renderAssist()}
+      {data.role === "user" ? User : Assitant}
       <EditMessage
         message={data}
         isOpen={showModal}

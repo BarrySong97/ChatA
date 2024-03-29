@@ -28,6 +28,7 @@ export enum CHAT_SERVICE {
   GET_MESSAGES = "getmessages",
   SEND_MESSAGE = "sendmessage",
   CREATE_CHAT = "createchat",
+  STOP_SEND = "stop_send",
   EDIT_CHAT = "editchat",
   DELETE_CHAT = "deletechat",
   INSERT_MESSAGE = "insertmessage",

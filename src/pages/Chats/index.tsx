@@ -1,4 +1,4 @@
-import { FC, useState } from "react";
+import { FC, useCallback, useState } from "react";
 import "./index.css";
 import ChatList from "./components/chat-list";
 import { Divider } from "@nextui-org/react";
@@ -22,21 +22,21 @@ const Chats: FC<ChatsProps> = () => {
       },
     }
   );
+  const onSelectChatChange = useCallback((c?: Chat) => {
+    setSelectChat(c);
+  }, []);
   return (
     <div className=" flex h-full w-full ">
       <div className="basis-[220px] flex-shrink-0  no-drag ">
         <ChatList
           selectChat={selectChat}
-          onChange={(c) => setSelectChat(c)}
+          onChange={onSelectChatChange}
           data={chats}
         />
       </div>
       <Divider orientation="vertical" className="h-full w-[1px]" />
       <div className="flex-1">
-        <Chatbox
-          onSelectChat={(c) => setSelectChat(c)}
-          selectChat={selectChat}
-        />
+        <Chatbox onSelectChat={onSelectChatChange} selectChat={selectChat} />
       </div>
     </div>
   );

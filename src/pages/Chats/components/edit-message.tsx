@@ -12,6 +12,7 @@ import { FC, useEffect, useState } from "react";
 import { message as AntMessage } from "antd";
 import { ChatService } from "@/api/services/ChatService";
 import { useQueryClient } from "react-query";
+import React from "react";
 export interface EditMessageProps {
   currentChat?: Chat;
   message: Message;
@@ -98,4 +99,4 @@ const EditMessage: FC<EditMessageProps> = ({
   );
 };
 
-export default EditMessage;
+export default React.memo(EditMessage);

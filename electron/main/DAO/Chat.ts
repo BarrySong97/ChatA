@@ -8,7 +8,6 @@ import { KIMI } from "../../LLMAPI/KIMI";
 
 export class ChatService {
   // 初始化一些绑定的事件到main window上, ts上可以直接在构造函数的参数初始化
-
   constructor(
     private prisma: PrismaClient<Prisma.PrismaClientOptions, never, DefaultArgs>
   ) {
@@ -24,6 +23,10 @@ export class ChatService {
     return res.reverse();
   }
 
+  async [CHAT_SERVICE.STOP_SEND]() {
+    ZHIPUAPI.stop = true;
+    KIMI.stop = true;
+  }
   // 创建chat
   [CHAT_SERVICE.CREATE_CHAT](title: string, brandId: string, id: string) {
     return this.prisma.chat.create({
@@ -88,15 +91,22 @@ export class ChatService {
     brandKey: string;
   }) {
     try {
-      const window = BrowserWindow.getFocusedWindow();
       let responseText = "";
+      const window = BrowserWindow.getFocusedWindow();
       // 如果最后一个时报错，那么其实不用删除
       if (retry && deleteId !== "error") {
-        await this.prisma.message.delete({
+        const item = await this.prisma.message.findUnique({
           where: {
             id: deleteId,
           },
         });
+        if (item) {
+          await this.prisma.message.delete({
+            where: {
+              id: deleteId,
+            },
+          });
+        }
       }
       switch (brandKey) {
         case "zhipu":
@@ -104,6 +114,7 @@ export class ChatService {
             messages,
             window,
             key,
+            messageId,
             chatId,
             model,
           });
@@ -114,9 +125,11 @@ export class ChatService {
             window,
             chatId,
             key,
+            messageId,
             model,
           });
       }
+
       if (!retry) {
         await this.prisma.message.create({
           data: {
@@ -128,15 +141,17 @@ export class ChatService {
         });
       }
 
-      await this.prisma.message.create({
-        data: {
-          id: sendId,
-          content: responseText,
-          role: "assistant",
-          chatId: chatId,
-        },
-      });
+      // await this.prisma.message.create({
+      //   data: {
+      //     id: sendId,
+      //     content: responseText,
+      //     role: "assistant",
+      //     chatId: chatId,
+      //   },
+      // });
     } catch (error: any) {
+      console.log(error);
+
       switch (brandKey) {
         case "zhipu":
           return {
@@ -165,29 +180,22 @@ export class ChatService {
   }
   // 插入消息
   async [CHAT_SERVICE.INSERT_MESSAGE](data: {
+    id: string;
     role: string;
     content: string;
     chatId: string;
     totalTokens: number;
   }) {
-    const res = await this.prisma.$transaction([
+    await this.prisma.$transaction([
       this.prisma.message.create({
         data: {
+          id: data.id,
           role: data.role,
           content: data.content,
           chatId: data.chatId,
         },
       }),
-      this.prisma.chat.update({
-        where: { id: data.chatId },
-        data: {
-          total_tokens: {
-            increment: data.totalTokens,
-          },
-        },
-      }),
     ]);
-    return res[0];
   }
   // 注册通信事件，就是上面这些枚举配置的函数
   initHandler() {

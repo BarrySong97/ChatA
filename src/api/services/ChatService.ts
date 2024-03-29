@@ -47,9 +47,7 @@ export class ChatService {
   /**
    * 插入消息
    */
-  public static insertMessage(
-    message: Partial<Message> & { totalTokens: number }
-  ): Promise<Message> {
+  public static insertMessage(message: Partial<Message>): Promise<Message> {
     return window.ipcRenderer.invoke(CHAT_SERVICE.INSERT_MESSAGE, message);
   }
 
@@ -90,5 +88,12 @@ export class ChatService {
     content: string;
   }): Promise<Message> {
     return window.ipcRenderer.invoke(CHAT_SERVICE.EDIT_MESSAGE, data);
+  }
+
+  /**
+   * 禁止发送消息
+   */
+  public static stop(): Promise<Message> {
+    return window.ipcRenderer.invoke(CHAT_SERVICE.STOP_SEND);
   }
 }

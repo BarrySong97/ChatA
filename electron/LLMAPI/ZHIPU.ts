@@ -4,16 +4,19 @@ import { GeneralMessageSend } from "../../src/api/models/Chat";
 import OpenAI from "openai";
 export class ZHIPUAPI {
   static baseUrl = "https://open.bigmodel.cn/api/paas/v4/chat/completions";
+  static stop = false;
   static token = "";
   public static async getCompletions({
     messages,
     window,
     key,
     chatId,
+    messageId,
     model,
   }: {
     key: string;
     model: string;
+    messageId: string;
     chatId: string;
     messages: GeneralMessageSend;
     window: BrowserWindow | null;
@@ -34,6 +37,7 @@ export class ZHIPUAPI {
       apiKey: ZHIPUAPI.token,
       baseURL: "https://open.bigmodel.cn/api/paas/v4",
     });
+    ZHIPUAPI.stop = false;
     const response = await openai.chat.completions.create({
       messages: messages as any,
       model,
@@ -43,20 +47,24 @@ export class ZHIPUAPI {
 
     for await (const chunk of response as any) {
       const text = chunk.choices[0].delta.content;
-      if (text) {
+      if (text && !ZHIPUAPI.stop) {
         totalText += text;
         window?.webContents.send(`completions`, {
           text: totalText,
+          messageId,
           done: false,
           chatId,
         });
       }
     }
-    window?.webContents.send(`completions`, {
-      text: totalText,
-      done: true,
-      chatId,
-    });
+    if (ZHIPUAPI.stop) {
+      window?.webContents.send(`completions`, {
+        text: totalText,
+        messageId,
+        done: true,
+        chatId,
+      });
+    }
     return totalText;
   }
 }
