@@ -12,6 +12,7 @@ import { useAtom } from "jotai";
 import ChatHeader from "./chat-header";
 import useScrollFunctions from "@/hooks";
 import { Button } from "@nextui-org/react";
+import { SolarMapArrowDownBold, SolarMapArrowUpBold } from "@/assets/icon";
 export interface ChatboxProps {
   selectChat?: Chat;
   onSelectChat: (chat: Chat) => void;
@@ -200,6 +201,7 @@ const Chatbox: FC<ChatboxProps> = ({ selectChat, onSelectChat }) => {
     }
     // 滚动到底部
   };
+  const scrollInverval = useRef<number>();
   let typingInterval: any = null; // 用于存储定时器ID，以便取消定时器
   const typeMessage = () => {
     const typeSpeed = 20; // 设置每个字符的打字速度（毫秒）
@@ -292,6 +294,7 @@ const Chatbox: FC<ChatboxProps> = ({ selectChat, onSelectChat }) => {
 
   const onStop = async () => {
     clearInterval(typingInterval);
+    clearInterval(scrollInverval.current);
     ChatService.stop();
     // 重置
     typeDoneRef.current = true;
@@ -330,9 +333,31 @@ const Chatbox: FC<ChatboxProps> = ({ selectChat, onSelectChat }) => {
     }
   };
   const lasMessage = messages?.[messages.length - 1];
-  // const { scrollToTop, scrollToBottom, isAtBottom, isAtTop } =
-  //   useScrollFunctions(scrollRef);
-
+  const scrollDirectionRef = useRef<"up" | "down" | "none">("none");
+  const { scrollToTop, scrollToBottom, isAtBottom, isAtTop, scrollDirection } =
+    useScrollFunctions(scrollRef);
+  scrollDirectionRef.current = scrollDirection;
+  useEffect(() => {
+    // 正在输出中的文字，需要特殊判断
+    const lasMessage = messages?.[messages.length - 1];
+    // 当最后一条消息状态正在打字的时候需要特殊判断
+    if (lasMessage?.status === "typing") {
+      // 如果用户向上滚动那么就停止滚动到最下面
+      switch (scrollDirectionRef.current) {
+        case "up":
+          // 如果用户向上滚动，就不执行任何操作
+          break;
+        case "down":
+        case "none":
+          // 如果用户向下滚动或没有滚动，直接滚动到最底下
+          scrollToBottom();
+          break;
+      }
+    } else {
+      // 如果是其他状态直接滚动到最底下即可
+      scrollToBottom();
+    }
+  }, [messages]);
   return (
     <div className="flex flex-col h-full">
       <div className="w-full">
@@ -349,8 +374,17 @@ const Chatbox: FC<ChatboxProps> = ({ selectChat, onSelectChat }) => {
       >
         <MessageList onStop={onStop} onRetry={onRetry} data={messages} />
       </div>
-      <div className="absolute bottom-20 flex right-4 gap-2">
-        {/* {!isAtBottom ? <Button variant="flat">2</Button> : null} {!isAtTop ? <Button variant="flat">2</Button> : null} */}
+      <div className="absolute bottom-20 flex right-6 gap-2">
+        {!isAtBottom ? (
+          <Button isIconOnly size="sm" variant="flat" onClick={scrollToBottom}>
+            <SolarMapArrowDownBold />
+          </Button>
+        ) : null}{" "}
+        {!isAtTop ? (
+          <Button isIconOnly size="sm" variant="flat" onClick={scrollToTop}>
+            <SolarMapArrowUpBold />
+          </Button>
+        ) : null}
       </div>
       <div className="pb-4">
         <ChatInput

@@ -8,6 +8,7 @@ import { useAtom } from "jotai";
 import { FC, useEffect, useState } from "react";
 import { useQueryClient } from "react-query";
 import ExportMessages from "./export-messages";
+import React from "react";
 export interface ChatHeaderProps {
   currentChat?: Chat;
   onSelectChat: (chat: Chat) => void;
@@ -131,4 +132,4 @@ const ChatHeader: FC<ChatHeaderProps> = ({
   );
 };
 
-export default ChatHeader;
+export default React.memo(ChatHeader);
