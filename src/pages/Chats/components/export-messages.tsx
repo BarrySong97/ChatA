@@ -11,7 +11,7 @@ import {
 } from "@nextui-org/react";
 import { Steps, message } from "antd";
 import { useAtom } from "jotai";
-import { FC, useEffect, useRef, useState } from "react";
+import { FC, useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "react-query";
 import MessageList from "./message-list";
 import { toPng, toBlob } from "html-to-image";
@@ -176,6 +176,9 @@ const ExportMessages: FC<ExportMessagesProps> = ({
       </>
     );
   };
+  const previewMessages = useMemo(() => {
+    return checkdMessages.filter((v) => !!v);
+  }, [checkdMessages]);
   const renderPreview = () => {
     return (
       <div className="">
@@ -200,11 +203,11 @@ const ExportMessages: FC<ExportMessagesProps> = ({
           </Button>
         </div>
         <div className="overflow-auto h-[500px] scrollbar ">
-          <div ref={messageContainerRef} className="py-2 px-2">
+          <div ref={messageContainerRef} className="h-[500px] py-2 px-2">
             <MessageList
               showActions={false}
               chat={selectChat}
-              data={checkdMessages.filter((v) => !!v)}
+              data={previewMessages}
             />
           </div>
         </div>

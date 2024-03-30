@@ -74,10 +74,13 @@ const MessageItem: FC<MessageItemProps> = ({
     },
   ];
   const renderUser = () => {
-    const className = clsx("flex  flex-row-reverse gap-3  justify-start", {
-      "mb-8": !showActions,
-      "mb-3": showActions,
-    });
+    const className = clsx(
+      "flex  flex-row-reverse gap-3 pr-4 pb-2 justify-start",
+      {
+        "mb-8": !showActions,
+        "mb-1": showActions,
+      }
+    );
     return (
       <div className={className}>
         <div className="mb-1">
@@ -96,6 +99,7 @@ const MessageItem: FC<MessageItemProps> = ({
                     <Button
                       size="sm"
                       onClick={action.onClick}
+                      key={action.title}
                       style={
                         {
                           "--text-count": `${action.title.length}em`,
@@ -123,10 +127,13 @@ const MessageItem: FC<MessageItemProps> = ({
     );
   };
   const renderAssist = () => {
-    const className = clsx({
-      "mb-8": !showActions,
-      "mb-3": showActions,
-    });
+    const className = clsx(
+      {
+        "mb-8": !showActions,
+        "mb-1": showActions,
+      },
+      "pb-2"
+    );
     return (
       <div className={className}>
         <div className="flex  gap-3 justify-start  ">
@@ -216,6 +223,7 @@ const MessageItem: FC<MessageItemProps> = ({
                             {action.icon}
                           </span>
                         }
+                        key={index}
                         className=" justify-center message-action-item   text-default-600 p-0"
                         variant="flat"
                       >
