@@ -37,7 +37,6 @@ const MessageItem: FC<MessageItemProps> = ({
 }) => {
   const [brand] = useAtom(brandAtom);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [showShareModal, setShowShareModal] = useState(false);
   const onCopy = async () => {
     if (messageContainerRef.current) {
       try {
@@ -297,11 +296,6 @@ const MessageItem: FC<MessageItemProps> = ({
         message={data}
         isOpen={showEditModal}
         onOpenChange={(v) => setShowEditModal(v)}
-      />
-      <ShareMessage
-        isOpen={showShareModal}
-        onOpenChange={setShowShareModal}
-        message={data}
       />
     </>
   );

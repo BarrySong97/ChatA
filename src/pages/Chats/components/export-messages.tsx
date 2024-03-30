@@ -15,6 +15,7 @@ import { FC, useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "react-query";
 import MessageList from "./message-list";
 import { toPng, toBlob } from "html-to-image";
+import MessageItem from "./message-item";
 export interface ExportMessagesProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
@@ -203,12 +204,18 @@ const ExportMessages: FC<ExportMessagesProps> = ({
           </Button>
         </div>
         <div className="overflow-auto h-[500px] scrollbar ">
-          <div ref={messageContainerRef} className="h-[500px] py-2 px-2">
-            <MessageList
-              showActions={false}
-              chat={selectChat}
-              data={previewMessages}
-            />
+          <div ref={messageContainerRef} className=" py-2 px-2 pl-4">
+            {previewMessages?.map((v, index) => {
+              const isLast = index === checkdMessages.length - 1;
+              return (
+                <MessageItem
+                  isLast={isLast}
+                  showActions={false}
+                  key={v.id}
+                  data={v as Message}
+                />
+              );
+            })}
           </div>
         </div>
       </div>
