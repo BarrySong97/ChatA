@@ -10,6 +10,15 @@ export interface ChatInputProps {
   currentChat?: Chat;
   lasMessage?: Message;
 }
+export type ModelSetting = {
+  temperature: number;
+  top_p: number;
+  maxToken: number;
+  n: number;
+  presence_penalty: number;
+  frequency_penalty: number;
+  stop: number;
+};
 const ChatInput: FC<ChatInputProps> = ({ lasMessage, currentChat, onSend }) => {
   const [currentModel] = useAtom(currentModelAtom);
   const actions = [

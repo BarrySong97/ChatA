@@ -208,6 +208,7 @@ const ChatList: FC<ChatListProps> = ({ selectChat, data, onChange }) => {
                   }
                   const model = brand.models.find((m) => m.name === arr[0]);
                   if (model) {
+                    onChange(undefined);
                     window.localStorage.setItem(
                       brand.name,
                       JSON.stringify(model)

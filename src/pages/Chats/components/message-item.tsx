@@ -1,6 +1,6 @@
 import { Chat, Message } from "@/api/models/Chat";
 import { CodeBlock } from "@/components/CodeBlock";
-import React, { FC, useMemo, useState } from "react";
+import React, { FC, useMemo, useRef, useState } from "react";
 import ReactLoading from "react-loading";
 import remarkGfm from "remark-gfm";
 import ReactMarkdown from "react-markdown";
@@ -17,6 +17,8 @@ import {
 } from "@/assets/icon";
 import EditMessage from "./edit-message";
 import clsx from "clsx";
+import ShareMessage from "./ShareMessage";
+import { toBlob } from "html-to-image";
 
 export interface MessageItemProps {
   data: Message;
@@ -34,14 +36,38 @@ const MessageItem: FC<MessageItemProps> = ({
   onRetry,
 }) => {
   const [brand] = useAtom(brandAtom);
-  const [showModal, setShowModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const onCopy = async () => {
+    if (messageContainerRef.current) {
+      try {
+        const blob = await toBlob(messageContainerRef.current, {
+          backgroundColor: "white",
+          style: {
+            width: "800px",
+          },
+        });
+        // dataurl 转成图片
+        if (!blob) return;
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            "image/png": blob,
+          }),
+        ]);
+        message.success("已复制到剪切板");
+      } catch (error) {
+        message.error("复制失败");
+      } finally {
+      }
+    }
+  };
   const commonActions = [
     {
       title: "编辑",
       icon: <SolarPenBold />,
       show: true,
       onClick: () => {
-        setShowModal(true);
+        setShowEditModal(true);
       },
     },
     {
@@ -58,6 +84,7 @@ const MessageItem: FC<MessageItemProps> = ({
       show: true,
     },
   ];
+
   const actions = [
     ...commonActions,
     {
@@ -69,13 +96,13 @@ const MessageItem: FC<MessageItemProps> = ({
     {
       title: "分享",
       icon: <MdiShare />,
-      onClick: () => {},
+      onClick: () => {
+        onCopy();
+      },
       show: true,
     },
   ];
-  function replaceNewLinesWithBreakTags(content: string) {
-    return content.replace(/\n/g, "<br>");
-  }
+  const messageContainerRef = useRef<HTMLDivElement>(null);
   const renderUser = () => {
     // const processedContent = replaceNewLinesWithBreakTags(data.content);
     const className = clsx(
@@ -147,6 +174,7 @@ const MessageItem: FC<MessageItemProps> = ({
 
           <div className="message-item">
             <div
+              ref={messageContainerRef}
               className={
                 showActions
                   ? "bg-primary-50 prose max-w-[60vw]  relative   text-primary-900  rounded-md p-2 px-4 shadow-sm "
@@ -159,7 +187,7 @@ const MessageItem: FC<MessageItemProps> = ({
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{
-                  code({ node, inline, className, children, ...props }) {
+                  code({ node, inline, className, children, ...props }: any) {
                     const match = /language-(\w+)/.exec(className || "");
                     return !inline && match ? (
                       <CodeBlock
@@ -267,8 +295,13 @@ const MessageItem: FC<MessageItemProps> = ({
       {data.role === "user" ? User : Assitant}
       <EditMessage
         message={data}
-        isOpen={showModal}
-        onOpenChange={(v) => setShowModal(v)}
+        isOpen={showEditModal}
+        onOpenChange={(v) => setShowEditModal(v)}
+      />
+      <ShareMessage
+        isOpen={showShareModal}
+        onOpenChange={setShowShareModal}
+        message={data}
       />
     </>
   );
