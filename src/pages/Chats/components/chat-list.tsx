@@ -31,6 +31,7 @@ import {
 import { ModelItem } from "@/model";
 import KeyInput from "./key-input";
 import React from "react";
+import { Virtuoso } from "react-virtuoso";
 
 export interface ChatListProps {
   data?: Chat[];
@@ -137,45 +138,47 @@ const ChatList: FC<ChatListProps> = ({ selectChat, data, onChange }) => {
           </Empty>
         </div>
       ) : (
-        <ScrollShadow
-          style={{ height }}
-          className=" px-2 overflow-auto scrollbar "
-        >
-          {data?.map((chat) => {
-            const chatlistClassName = clsx(
-              "rounded-md text-sm cursor-pointer p-1 px-2 hover:transition-colors hover:bg-primary/20 hover:text-primary",
-              {
-                "bg-primary/20 text-primary": chat.id === selectChat?.id,
-              }
-            );
-            return (
-              <Dropdown
-                menu={{
-                  items,
-                  onClick: ({ key }) => {
-                    switch (key) {
-                      case "delete":
-                        onDeleteChat(chat.id);
-                        break;
-                    }
-                  },
-                }}
-                trigger={["contextMenu"]}
-                key={chat.id}
-              >
-                <div
-                  key={chat.id}
-                  onClick={() => {
-                    onChange(chat);
+        <div style={{ height }} className=" px-2  ">
+          <Virtuoso
+            style={{ height: "100%" }}
+            data={data ?? []}
+            className="overflow-auto  scrollbar "
+            itemContent={(index, chat) => {
+              const chatlistClassName = clsx(
+                "rounded-md text-sm cursor-pointer p-1 px-2 hover:transition-colors hover:bg-primary/20 hover:text-primary",
+                {
+                  "bg-primary/20 text-primary": chat.id === selectChat?.id,
+                }
+              );
+              return (
+                <Dropdown
+                  menu={{
+                    items,
+                    onClick: ({ key }) => {
+                      switch (key) {
+                        case "delete":
+                          onDeleteChat(chat.id);
+                          break;
+                      }
+                    },
                   }}
-                  className={chatlistClassName}
+                  trigger={["contextMenu"]}
+                  key={chat.id}
                 >
-                  {chat.title}
-                </div>
-              </Dropdown>
-            );
-          })}
-        </ScrollShadow>
+                  <div
+                    key={chat.id}
+                    onClick={() => {
+                      onChange(chat);
+                    }}
+                    className={chatlistClassName}
+                  >
+                    {chat.title}
+                  </div>
+                </Dropdown>
+              );
+            }}
+          />
+        </div>
       )}
       <div className="px-2">
         {brand?.models ? (

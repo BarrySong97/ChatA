@@ -28,18 +28,15 @@ const MessageList: FC<MessageListProps> = ({
   const isBottomRef = React.useRef(false);
   const [isAtBottom, setIsAtBottom] = useState(false);
   const [isAtTop, setIsAtTop] = useState(false);
-  if (!showActions) {
-    console.log(data);
-  }
 
   const scrollToBottom = useCallback(
     _.debounce(() => {
       scrollRef.current?.scrollToIndex({
         index: "LAST",
         align: "end",
-        offset: 10,
+        offset: 30,
       });
-    }, 30),
+    }, 25),
     []
   );
   const scrollToTop = useCallback(() => {
@@ -60,11 +57,15 @@ const MessageList: FC<MessageListProps> = ({
     } else {
       // 如果是其他状态直接滚动到最底下即可
       // scrollToBottom(
-      scrollToBottom();
+      scrollRef.current?.scrollToIndex({
+        index: "LAST",
+        align: "end",
+        offset: 30,
+      });
     }
   }, [data]);
 
-  return brand?.key && data?.length ? (
+  return brand?.key && data ? (
     <>
       <div className="absolute bottom-20 flex right-6 gap-2 z-[100]">
         {!isAtBottom ? (
@@ -87,6 +88,7 @@ const MessageList: FC<MessageListProps> = ({
           isBottomRef.current = v;
           setIsAtBottom(v);
         }}
+        overscan={1000}
         atTopStateChange={(v) => {
           setIsAtTop(v);
         }}
