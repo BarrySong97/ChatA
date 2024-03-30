@@ -219,7 +219,9 @@ const Chatbox: FC<ChatboxProps> = ({ selectChat, onSelectChat }) => {
             }
 
             return [
-              ..._data,
+              ..._data.filter((v) =>
+                ["sending", "typing"].includes(v.status as any)
+              ),
               {
                 content: typeTextRef.current,
                 role: "assistant",

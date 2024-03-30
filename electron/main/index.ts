@@ -1,14 +1,9 @@
-import { app, BrowserWindow, shell, ipcMain } from "electron";
+import { app, BrowserWindow, shell } from "electron";
 import { release } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { update } from "./update";
-import {
-  IPC_EVENT_KEYS,
-  MAIN_SEND_RENDER_KEYS,
-  ProjectStage,
-  TRAFFIC_LIGHT,
-} from "../../src/constant";
+import { MAIN_SEND_RENDER_KEYS } from "../../src/constant";
 import { AppManager } from "./AppManager";
 import { PrismaClient } from "@prisma/client";
 import { ChatService } from "./DAO/Chat";
@@ -97,23 +92,28 @@ async function createWindow() {
       // Warning: Enable nodeIntegration and disable contextIsolation is not secure in production
     },
   });
-  win.webContents.on("will-navigate", () => {});
+  win.webContents.on("will-navigate", (e, url) => {
+    if (url != win?.webContents.getURL()) {
+      e.preventDefault();
+      shell.openExternal(url);
+    }
+  });
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith("https:") || url.startsWith("http:"))
+      shell.openExternal(url);
+    return { action: "deny" };
+  });
   trafficLightListener(win);
   if (url) {
     win.loadURL(url);
   } else {
     win.loadFile(indexHtml);
   }
-
   win.webContents.on("did-finish-load", () => {
     win?.webContents.send("main-process-message", new Date().toLocaleString());
   });
 
   // Make all links open with the browser, not with the application
-  win.webContents.setWindowOpenHandler(({ url }) => {
-    if (url.startsWith("https:")) shell.openExternal(url);
-    return { action: "deny" };
-  });
   const prismaClient = new PrismaClient();
   // 把所有通信的代码都挂载上面
   new AppManager(win, new Map(), indexHtml, preload, url);
