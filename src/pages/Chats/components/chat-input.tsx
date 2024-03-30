@@ -30,7 +30,7 @@ const ChatInput: FC<ChatInputProps> = ({ lasMessage, currentChat, onSend }) => {
   return (
     <div className="h-full flex flex-col pt-2 relative">
       <Textarea
-        placeholder="开启你的对话之旅！"
+        placeholder="Enter 发送; Shift + Enter 换行"
         value={text}
         onChange={(e) => setText(e.target.value)}
         isDisabled={

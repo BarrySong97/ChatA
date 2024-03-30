@@ -73,7 +73,11 @@ const MessageItem: FC<MessageItemProps> = ({
       show: true,
     },
   ];
+  function replaceNewLinesWithBreakTags(content: string) {
+    return content.replace(/\n/g, "<br>");
+  }
   const renderUser = () => {
+    // const processedContent = replaceNewLinesWithBreakTags(data.content);
     const className = clsx(
       "flex  flex-row-reverse gap-3 pr-4 pb-2 justify-start",
       {
@@ -89,8 +93,8 @@ const MessageItem: FC<MessageItemProps> = ({
           </Avatar>
         </div>
         <div className="max-w-[50%] message-item">
-          <div className="p-2 px-4 prose   bg-primary rounded-md text-primary-foreground">
-            <p>{data.content}</p>
+          <div className="p-2 px-4    bg-primary rounded-md text-primary-foreground">
+            <p dangerouslySetInnerHTML={{ __html: data.content }} />
           </div>
           <div className="flex gap-2 justify-end message-action-items ">
             {showActions

@@ -36,7 +36,7 @@ const MessageList: FC<MessageListProps> = ({
         align: "end",
         offset: 30,
       });
-    }, 25),
+    }, 30),
     []
   );
   const scrollToTop = useCallback(() => {
