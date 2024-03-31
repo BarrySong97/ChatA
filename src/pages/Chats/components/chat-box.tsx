@@ -214,13 +214,10 @@ const Chatbox: FC<ChatboxProps> = ({ selectChat, onSelectChat }) => {
           ["messages", newChatId],
           (_data: Message[] = []) => {
             const length = _data.length;
-            if (length % 2 === 0) {
-              _data.pop();
-            }
 
             return [
-              ..._data.filter((v) =>
-                ["sending", "typing"].includes(v.status as any)
+              ..._data.filter(
+                (v) => !["sending", "typing"].includes(v.status as any)
               ),
               {
                 content: typeTextRef.current,
@@ -240,7 +237,10 @@ const Chatbox: FC<ChatboxProps> = ({ selectChat, onSelectChat }) => {
               const length = _data.length;
               const last = _data[length - 1];
               last.status = "success";
-              return [..._data] as Message[];
+
+              return [
+                ..._data.filter((v) => v.status !== "typing"),
+              ] as Message[];
             }
           );
           ChatService.insertMessage({

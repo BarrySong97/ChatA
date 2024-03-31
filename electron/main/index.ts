@@ -226,19 +226,27 @@ async function createWindow() {
   });
 
   // Make all links open with the browser, not with the application
-  const prismaClient = new PrismaClient({
-    __internal: {
-      engine: {
-        // @ts-expect-error internal prop
-        binaryPath: qePath,
-      },
-    },
-    datasources: {
-      db: {
-        url: `file:${dbPath}`,
-      },
-    },
-  });
+  const prismaClient = isDev
+    ? new PrismaClient({
+        datasources: {
+          db: {
+            url: `file:${dbPath}`,
+          },
+        },
+      })
+    : new PrismaClient({
+        __internal: {
+          engine: {
+            // @ts-expect-error internal prop
+            binaryPath: qePath,
+          },
+        },
+        datasources: {
+          db: {
+            url: `file:${dbPath}`,
+          },
+        },
+      });
   // 迁移数据库结构
   if (!isDev) {
     win?.webContents.send(MAIN_SEND_RENDER_KEYS.PRISMA_ERROR, "1");
