@@ -1,13 +1,17 @@
-import { app, BrowserWindow, shell } from "electron";
+import { app, BrowserWindow, ipcMain, shell } from "electron";
 import { release } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { update } from "./update";
 import { MAIN_SEND_RENDER_KEYS } from "../../src/constant";
 import { AppManager } from "./AppManager";
-import { PrismaClient } from "@prisma/client";
+import pkg from "@prisma/client";
 import { ChatService } from "./DAO/Chat";
+import fs from "node:fs";
+import path from "node:path";
+import { fork } from "node:child_process";
 
+const { PrismaClient } = pkg;
 globalThis.__filename = fileURLToPath(import.meta.url);
 globalThis.__dirname = dirname(__filename);
 
@@ -44,10 +48,6 @@ const preload = join(__dirname, "../preload/index.mjs");
 const url = process.env.VITE_DEV_SERVER_URL;
 const indexHtml = join(process.env.DIST, "index.html");
 
-const LoginWindowSize = {
-  width: 321,
-  height: 444,
-};
 const MainWindowSize = {
   width: 981,
   height: 710,
@@ -75,6 +75,118 @@ function trafficLightListener(win?: BrowserWindow) {
         win?.webContents.send(MAIN_SEND_RENDER_KEYS.RESTORE);
       }
     });
+  }
+}
+const isDev = url;
+const dbPath = isDev
+  ? join(__dirname, "../../prisma/chata.db")
+  : path.join(app.getPath("userData"), "chata-prod.db");
+// prisma 迁移
+export const platformToExecutables: any = {
+  win32: {
+    schemaEngine: "node_modules/@prisma/engines/schema-engine-windows.exe",
+    queryEngine: "node_modules/@prisma/engines/query_engine-windows.dll.node",
+  },
+  linux: {
+    schemaEngine:
+      "node_modules/@prisma/engines/schema-engine-debian-openssl-1.1.x",
+    queryEngine:
+      "node_modules/@prisma/engines/libquery_engine-debian-openssl-1.1.x.so.node",
+  },
+  darwin: {
+    schemaEngine: "node_modules/@prisma/engines/schema-engine-darwin",
+    queryEngine:
+      "node_modules/@prisma/engines/libquery_engine-darwin.dylib.node",
+  },
+  darwinArm64: {
+    schemaEngine: "node_modules/@prisma/engines/schema-engine-darwin-arm64",
+    queryEngine:
+      "node_modules/@prisma/engines/libquery_engine-darwin-arm64.dylib.node",
+  },
+};
+const extraResourcesPath = process.resourcesPath; // impacted by extraResources setting in electron-builder.yml
+
+const schmemaPath = path.join(extraResourcesPath, "prisma/schema.prisma");
+function getPlatformName(): string {
+  const isDarwin = process.platform === "darwin";
+  if (isDarwin && process.arch === "arm64") {
+    return process.platform + "Arm64";
+  }
+
+  return process.platform;
+}
+
+const platformName = getPlatformName();
+
+export const mePath = path.join(
+  extraResourcesPath,
+  platformToExecutables[platformName].schemaEngine
+);
+export const qePath = path.join(
+  extraResourcesPath,
+  platformToExecutables[platformName].queryEngine
+);
+
+export async function runPrismaCommand({
+  command,
+  dbUrl,
+  win,
+}: {
+  command: string[];
+  dbUrl: string;
+  win?: BrowserWindow;
+}): Promise<number> {
+  try {
+    const exitCode = await new Promise((resolve, _) => {
+      const prismaPath = path.join(
+        extraResourcesPath,
+        "node_modules/prisma/build/index.js"
+      );
+      const child = fork(prismaPath, command, {
+        env: {
+          ...process.env,
+          DATABASE_URL: dbUrl,
+          PRISMA_SCHEMA_ENGINE_BINARY: mePath,
+          PRISMA_QUERY_ENGINE_LIBRARY: qePath,
+        },
+        stdio: "inherit",
+      });
+      let fullOutput = "";
+
+      child.on("error", (err: any) => {
+        console.error("Child process got error:", err);
+      });
+
+      child.on("close", (code: any, signal: any) => {
+        resolve(code);
+      });
+    });
+
+    if (exitCode !== 0)
+      throw Error(`command ${command} failed with exit code ${exitCode}`);
+
+    return exitCode;
+  } catch (e) {
+    win?.webContents.send(MAIN_SEND_RENDER_KEYS.PRISMA_ERROR, e);
+    console.error(e);
+    throw e;
+  }
+}
+if (!isDev) {
+  try {
+    // database file does not exist, need to create
+    fs.copyFileSync(
+      join(process.resourcesPath, "prisma/prod.db"),
+      dbPath,
+      fs.constants.COPYFILE_EXCL
+    );
+    console.log("New database file created");
+  } catch (err: any) {
+    if (err.code != "EEXIST") {
+      console.error(`Failed creating sqlite file.`, err);
+    } else {
+      console.log("Database file detected");
+    }
   }
 }
 const isMac = process.platform === "darwin";
@@ -109,12 +221,32 @@ async function createWindow() {
   } else {
     win.loadFile(indexHtml);
   }
-  win.webContents.on("did-finish-load", () => {
+  win.webContents.on("did-finish-load", async () => {
     win?.webContents.send("main-process-message", new Date().toLocaleString());
   });
 
   // Make all links open with the browser, not with the application
-  const prismaClient = new PrismaClient();
+  const prismaClient = new PrismaClient({
+    __internal: {
+      engine: {
+        // @ts-expect-error internal prop
+        binaryPath: qePath,
+      },
+    },
+    datasources: {
+      db: {
+        url: `file:${dbPath}`,
+      },
+    },
+  });
+  // 迁移数据库结构
+  if (!isDev) {
+    win?.webContents.send(MAIN_SEND_RENDER_KEYS.PRISMA_ERROR, "1");
+    await runPrismaCommand({
+      command: ["migrate", "deploy", "--schema", schmemaPath],
+      dbUrl: `file:${dbPath}`,
+    });
+  }
   // 把所有通信的代码都挂载上面
   new AppManager(win, new Map(), indexHtml, preload, url);
   new ChatService(prismaClient);

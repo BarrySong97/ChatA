@@ -129,21 +129,19 @@ const Side: FC<SideProps> = () => {
             </Tooltip>
           );
         })}
-        {window.platform.isProduction() ? null : (
-          <Tooltip placement={"right"} content={"Dev Tool"}>
-            <Button
-              onClick={ipcDevtoolMain}
-              className=" "
-              radius="none"
-              size="sm"
-              variant="light"
-            >
-              <span className="text-lg text-default-700" style={{}}>
-                <MaterialSymbolsToolsWrench />
-              </span>
-            </Button>
-          </Tooltip>
-        )}
+        <Tooltip placement={"right"} content={"Dev Tool"}>
+          <Button
+            onClick={ipcDevtoolMain}
+            className=" "
+            radius="none"
+            size="sm"
+            variant="light"
+          >
+            <span className="text-lg text-default-700" style={{}}>
+              <MaterialSymbolsToolsWrench />
+            </span>
+          </Button>
+        </Tooltip>
       </div>
     </div>
   );

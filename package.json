@@ -1,6 +1,6 @@
 {
   "name": "chat-a",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "main": "dist-electron/main/index.js",
   "author": "Barry Song",
   "license": "MIT",
@@ -14,7 +14,10 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build && electron-builder -mwl",
-    "build:only": "vite build && electron-builder"
+    "copy:prisma": "node ./prisma-copy.cjs",
+    "build:mac": "vite build && electron-builder -m",
+    "build:linux": "vite build && electron-builder -l",
+    "build:windows": "vite build && electron-builder -w"
   },
   "dependencies": {
     "@bugsnag/cuid": "^3.0.2",

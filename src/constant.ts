@@ -9,6 +9,7 @@ export enum IPC_EVENT_KEYS {
 export enum MAIN_SEND_RENDER_KEYS {
   MAXIMIZE = "maximize",
   RESTORE = "restore",
+  PRISMA_ERROR = "prisma_render",
 }
 export enum ProjectStage {
   TITLE_ABSTRACT_SCREENING = "title_abstract_screening",

@@ -1,9 +1,33 @@
 {
-  "appId": "com.meta-analysis.app",
+  "appId": "com.chata.app",
   "asar": true,
   "directories": {
     "output": "release/${version}"
   },
+  "extraResources": [
+    "prisma/**/*",
+    {
+      "from": "node_modules/.pnpm/@prisma+client@5.11.0_prisma@5.11.0/node_modules/.prisma",
+      "to": "node_modules/.prisma",
+      "filter": [
+        "**/*"
+      ]
+    },
+    {
+      "from": "node_modules/@prisma",
+      "to": "node_modules/@prisma",
+      "filter": [
+        "**/*"
+      ]
+    },
+    {
+      "from": "node_modules/prisma",
+      "to": "node_modules/prisma",
+      "filter": [
+        "**/*"
+      ]
+    }
+  ],
   "files": [
     "dist-electron",
     "dist"

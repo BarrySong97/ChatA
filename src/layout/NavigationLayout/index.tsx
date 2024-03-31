@@ -1,13 +1,19 @@
 import DragTitle from "@/components/DragTitle";
 import { NextUIProvider } from "@nextui-org/react";
-import { FC } from "react";
+import { FC, useEffect } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import Side from "./components/side";
 import TrafficLight from "@/components/TrafficLight";
+import { MAIN_SEND_RENDER_KEYS } from "@/constant";
 export interface AppLayoutProps {}
 const AppLayout: FC<AppLayoutProps> = () => {
   const navigate = useNavigate();
   const isMac = window.platform.getOS() === "darwin";
+  useEffect(() => {
+    window.ipcRenderer.on(MAIN_SEND_RENDER_KEYS.PRISMA_ERROR, (...props) => {
+      console.log(props);
+    });
+  }, []);
   return (
     <NextUIProvider navigate={navigate}>
       <div className="flex h-screen overflow-hidden">
